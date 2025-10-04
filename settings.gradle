@@ -6,4 +6,4 @@
  */
 
 rootProject.name = 'Chat_Multiple_Client'
-include('client', 'server')
+include('client', 'server','player','capturer','server_TCP','client_TCP')
