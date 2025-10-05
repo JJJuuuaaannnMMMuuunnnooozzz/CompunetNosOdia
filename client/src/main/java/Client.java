@@ -48,8 +48,8 @@ public class Client {
             System.out.println("2. Añadir usuario a grupo");
             System.out.println("3. Enviar mensaje a usuario");
             System.out.println("4. Enviar mensaje a grupo");
-            System.out.println("5. Enviar nota de voz (no implementado)");
-            System.out.println("6. Enviar nota de voz (no implementado)");
+            System.out.println("5. Enviar nota de voz a usuario");
+            System.out.println("6. Enviar nota de voz a grupo");
             System.out.println("7. Realizar llamada (no implementado)");
             System.out.println("8. Salir");
             System.out.print("Elige opción: ");
