@@ -5,6 +5,34 @@ import java.util.Base64;
 
 public class Client {
     public static void main(String[] args) throws Exception {
+
+
+
+        try {
+            Thread senderThread = new Thread(() -> {
+                try {
+                    AudioCallSender.startCall("localhost", 8888);
+                } catch (Exception e) {
+                    System.out.println("Error en el hilo del emisor: " + e);
+                }
+            });
+
+            Thread receiverThread = new Thread(() -> {
+                try {
+                    AudioCallCapturer.startReception(8888);
+                } catch (Exception e) {
+                    System.out.println("Error en el hilo del receptor: " + e);
+                }
+            });
+
+            senderThread.start();
+            receiverThread.start();
+        } catch (Exception e) {
+            System.out.println("Error general: " + e);
+        }
+
+
+        /*
         String host = (args.length > 0) ? args[0] : "localhost";
         int port = (args.length > 1) ? Integer.parseInt(args[1]) : 9090;
 
@@ -122,7 +150,7 @@ public class Client {
                     System.out.println("Opción no implementada aún.");
             }
         }
-
+    */
     }
 
 }
