@@ -8,9 +8,12 @@ public class ClientSession implements Runnable {
     private BufferedReader in;
     private PrintWriter out;
     private String username;
+    private String clientIp;
+    private int udpPort = 8888;
 
     public ClientSession(Socket socket) {
         this.socket = socket;
+        this.clientIp = socket.getInetAddress().getHostAddress();
     }
 
     public void sendMessage(String msg) {
@@ -179,7 +182,61 @@ public class ClientSession implements Runnable {
                     }
 
                     sendMessage("Nota de voz enviada al grupo '" + groupName + "'.");
+
                     break;
+
+                case "CALL_USER":
+                    if (parts.length < 2) {
+                        sendMessage("Uso: CALL_USER <usuario>");
+                        break;
+                    }
+
+                    String targetUserCall = parts[1];
+                    ClientSession targetSession = Server.clients.get(targetUserCall);
+
+                    if (targetSession != null) {
+
+
+                            targetSession.sendMessage("CALL_FROM " + this.username + " " + this.clientIp + " " + this.udpPort);
+
+                        if(in.readLine().equalsIgnoreCase("s")){
+                            sendMessage("Llamando a " + targetUserCall + "...");
+
+                        }else{
+                            sendMessage("Llamada cancelada");
+                        }
+
+                    } else {
+                        sendMessage("Usuario '" + targetUserCall + "' no encontrado o desconectado.");
+                    }
+                    break;
+
+                case "CALL_GROUP":
+                    if (parts.length < 2) {
+                        sendMessage("Uso: CALL_GROUP <nombreGrupo>");
+                        break;
+                    }
+
+                    String groupNameCall = parts[1];
+                    Set<String> members = Server.groups.get(groupNameCall);
+
+                    if (members == null) {
+                        sendMessage("El grupo '" + groupNameCall + "' no existe.");
+                        break;
+                    }
+
+                    for (String member : members) {
+                        if (!member.equals(username)) {
+                            ClientSession s = Server.clients.get(member);
+                            if (s != null) {
+                                s.sendMessage("CALL_FROM " + this.username + " " + this.clientIp + " " + this.udpPort);
+                            }
+                        }
+                    }
+
+                    sendMessage("Llamada enviada al grupo '" + groupNameCall + "'.");
+                    break;
+
 
                 default:
                     sendMessage("Comando no reconocido.");
