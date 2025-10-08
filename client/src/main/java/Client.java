@@ -83,6 +83,8 @@ public class Client {
                         handleIncomingCall(resp);
                     }else if (resp.startsWith("INCOMING_GROUP_CALL")) {
                         handleIncomingGroupCall(resp);
+                    } else if (resp.startsWith("CALL_ACCEPTED")) {
+                        handleCallAccepted(resp);
                     } else if (resp.startsWith("VOICE_FROM")) {
                         processVoiceNote(resp);
                     } else {
@@ -176,9 +178,20 @@ public class Client {
         try {
             System.out.print("Usuario destino: ");
             String user = sc.nextLine();
-            int port = 8888; //udp port
-            out.println("CALL_USER " + user + " " + port);
-            System.out.println("Llamando a " + user + " desde puerto " + port + "...");
+
+            int listenPort = 8888;
+
+            new Thread(() -> {
+                try {
+                    AudioCallCapturer.startReception(listenPort);
+                } catch (Exception e) {
+                    System.out.println("Error en recepción de audio: " + e.getMessage());
+                }
+            }).start();
+
+
+            out.println("CALL_USER " + user + " " + listenPort);
+            System.out.println("Llamando a " + user + " desde puerto " + listenPort + "...");
         } catch (Exception e) {
             System.out.println("Error iniciando llamada: " + e.getMessage());
         }
@@ -189,40 +202,64 @@ public class Client {
         try {
             String[] parts = msg.split(" ");
             String fromUser = parts[1];
-            String ip = parts[2];
-            int port = Integer.parseInt(parts[3]);
+            String ipA = parts[2]; // IP de A
+            int portA = Integer.parseInt(parts[3]);
 
-            System.out.println("Llamada entrante de " + fromUser + " (" + ip + ":" + port + ")");
-            //System.out.print("¿Aceptar? (s/n): ");
-            //String ans = sc.nextLine();
+            int listenPortB = 8889;
 
-            //if (ans.equalsIgnoreCase("s")) {
-             //   System.out.println("Conectando llamada...");
+            System.out.println("Llamada entrante de " + fromUser + " (" + ipA + ":" + portA + ")");
 
+            new Thread(() -> {
+                try {
+                    AudioCallCapturer.startReception(listenPortB);
+                } catch (Exception e) {
+                    System.out.println("Error en recepción de audio: " + e.getMessage());
+                }
+            }).start();
 
-                new Thread(() -> {
-                    try {
-                        AudioCallCapturer.startReception(port);
-                    } catch (Exception e) {
-                        System.out.println("Error en recepción de audio: " + e.getMessage());
-                    }
-                }).start();
+            new Thread(() -> {
+                try {
+                    AudioCallSender.startCall(ipA, portA);
+                } catch (Exception e) {
+                    System.out.println("Error en envío de audio: " + e.getMessage());
+                }
+            }).start();
 
-                new Thread(() -> {
-                    try {
-                        AudioCallSender.startCall(ip, port);
-                    } catch (Exception e) {
-                        System.out.println("Error en envío de audio: " + e.getMessage());
-                    }
-                }).start();
-
-           //} else {
-             //   System.out.println("Llamada rechazada.");
-            //}
+            sendAcceptCall(fromUser, listenPortB);
 
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Error procesando llamada entrante: " + e.getMessage());
+        }
+
+    }
+
+
+    private static void sendAcceptCall(String user, int port) {
+        out.println("ACCEPT_CALL " + user + " " + port);
+    }
+
+    private static void handleCallAccepted(String msg) {
+        try {
+            String[] parts = msg.split(" ");
+            String fromUser = parts[1]; // Usuario B
+            String ipB = parts[2]; // IP de B
+            int portB = Integer.parseInt(parts[3]); // Puerto de recepción de B
+
+            System.out.println(fromUser + " aceptó la llamada. Conectando audio a " + ipB + ":" + portB + "...");
+
+            // Cliente A (el que llamó) ya está escuchando. Ahora debe iniciar el envío a B.
+            new Thread(() -> {
+                try {
+                    AudioCallSender.startCall(ipB, portB);
+                } catch (Exception e) {
+                    System.out.println("Error en envío de audio a B: " + e.getMessage());
+                }
+            }).start();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error procesando aceptación de llamada: " + e.getMessage());
         }
     }
 

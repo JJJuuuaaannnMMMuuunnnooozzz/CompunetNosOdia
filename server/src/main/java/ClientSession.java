@@ -9,7 +9,6 @@ public class ClientSession implements Runnable {
     private PrintWriter out;
     private String username;
     private String clientIp;
-    private int udpPort = 8888;
 
     public ClientSession(Socket socket) {
         this.socket = socket;
@@ -185,21 +184,40 @@ public class ClientSession implements Runnable {
 
                     break;
 
+
                 case "CALL_USER":
-                    if (parts.length < 2) {
-                        sendMessage("Uso: CALL_USER <usuario>");
+                    if (parts.length < 3) {
+                        sendMessage("Uso: CALL_USER <usuario> <puertoUDP>");
                         break;
                     }
 
                     String targetUserCall = parts[1];
+                    int callerUdpPort = Integer.parseInt(parts[2]);
                     ClientSession targetSession = Server.clients.get(targetUserCall);
 
                     if (targetSession != null) {
-                            targetSession.sendMessage("CALL_FROM " + this.username + " " + this.clientIp + " " + this.udpPort);
-                            sendMessage("Llamando a " + targetUserCall + "...");
+                        targetSession.sendMessage("CALL_FROM " + this.username + " " + this.clientIp + " " + callerUdpPort);
+                        sendMessage("Llamando a " + targetUserCall + "...");
 
                     } else {
                         sendMessage("Usuario '" + targetUserCall + "' no encontrado o desconectado.");
+                    }
+                    break;
+
+                case "ACCEPT_CALL":
+                    if (parts.length < 3) {
+                        sendMessage("Uso: ACCEPT_CALL <usuario> <puertoUDP>");
+                        break;
+                    }
+                    String targetUserAccept = parts[1];
+                    int receiverUdpPort = Integer.parseInt(parts[2]);
+                    ClientSession callerSession = Server.clients.get(targetUserAccept);
+
+                    if (callerSession != null) {
+                        callerSession.sendMessage("CALL_ACCEPTED " + this.username + " " + this.clientIp + " " + receiverUdpPort);
+                        sendMessage("Llamada aceptada, notificando a " + targetUserAccept);
+                    } else {
+                        sendMessage("El usuario que llamó (" + targetUserAccept + ") ya se desconectó.");
                     }
                     break;
 
@@ -221,7 +239,7 @@ public class ClientSession implements Runnable {
                         if (!member.equals(username)) {
                             ClientSession s = Server.clients.get(member);
                             if (s != null) {
-                                s.sendMessage("CALL_FROM " + this.username + " " + this.clientIp + " " + this.udpPort);
+                                s.sendMessage("CALL_FROM " + this.username + " " + this.clientIp + " " /**+ this.udpPort*/);
                             }
                         }
                     }
@@ -238,4 +256,6 @@ public class ClientSession implements Runnable {
             sendMessage("Error al procesar comando: " + e.getMessage());
         }
     }
+
+
 }

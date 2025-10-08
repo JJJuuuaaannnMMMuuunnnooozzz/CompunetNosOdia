@@ -21,7 +21,6 @@ public class AudioCallCapturer {
 
             DatagramSocket socket = new DatagramSocket(listeningPort);
             byte[] buffer = new byte[4096];
-
             while(recieving) {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
