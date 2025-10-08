@@ -195,16 +195,8 @@ public class ClientSession implements Runnable {
                     ClientSession targetSession = Server.clients.get(targetUserCall);
 
                     if (targetSession != null) {
-
-
                             targetSession.sendMessage("CALL_FROM " + this.username + " " + this.clientIp + " " + this.udpPort);
-
-                        if(in.readLine().equalsIgnoreCase("s")){
                             sendMessage("Llamando a " + targetUserCall + "...");
-
-                        }else{
-                            sendMessage("Llamada cancelada");
-                        }
 
                     } else {
                         sendMessage("Usuario '" + targetUserCall + "' no encontrado o desconectado.");
