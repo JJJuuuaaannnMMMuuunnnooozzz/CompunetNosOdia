@@ -292,8 +292,10 @@ public class Client {
             System.out.print("Nombre del grupo: ");
             String group = sc.nextLine();
 
+            // Puerto aleatorio para recibir audio en esta llamada grupal
             int listenPort = 9000 + (int)(Math.random() * 1000);
 
+            // Iniciar recepción de audio
             new Thread(() -> {
                 try {
                     AudioCallCapturer.startReception(listenPort);
@@ -311,7 +313,6 @@ public class Client {
 
     private static void handleIncomingGroupCall(String msg) {
         try {
-            System.out.println("mira pendejo  " +msg);
             String[] parts = msg.split(" ");
             String groupName = parts[1];
             String callerUser = parts[2];
@@ -320,9 +321,10 @@ public class Client {
 
             System.out.println("Llamada grupal entrante del grupo: " + groupName + " iniciada por " + callerUser);
 
-
+            // Puerto aleatorio para recibir audio
             int listenPort = 9000 + (int)(Math.random() * 1000);
 
+            // Iniciar recepción de audio
             new Thread(() -> {
                 try {
                     AudioCallCapturer.startReception(listenPort);
@@ -331,6 +333,7 @@ public class Client {
                 }
             }).start();
 
+            // Conectarse al usuario que inició la llamada
             String participantKey = callerUser;
             Thread senderThread = new Thread(() -> {
                 try {
@@ -342,6 +345,7 @@ public class Client {
             senderThread.start();
             groupCallSenders.put(participantKey, senderThread);
 
+            // Notificar al servidor que estamos en la llamada
             out.println("JOIN_GROUP_CALL " + groupName + " " + listenPort);
 
         } catch (Exception e) {
@@ -423,9 +427,12 @@ public class Client {
             String userLeft = parts[2];
             System.out.println("El usuario " + userLeft + " salió de la llamada grupal '" + groupName + "'.");
 
+            // Detener el sender específico para ese usuario
             Thread senderThread = groupCallSenders.remove(userLeft);
             if (senderThread != null) {
-
+                // El AudioCallSender se detendrá cuando se llame stopCall()
+                // pero como tenemos múltiples conexiones, necesitaríamos una implementación
+                // más sofisticada para detener solo una conexión específica
             }
         }
     }

@@ -255,6 +255,7 @@ public class ClientSession implements Runnable {
                         break;
                     }
 
+
                     GroupCallInfo callInfo = new GroupCallInfo(groupNameCall);
                     callInfo.addParticipant(username, this.clientIp, initiatorPort);
                     Server.activeGroupCalls.put(groupNameCall, callInfo);
@@ -286,15 +287,18 @@ public class ClientSession implements Runnable {
                         break;
                     }
 
+
                     for (Map.Entry<String, ParticipantInfo> entry : activeCall.getParticipants().entrySet()) {
                         String existingUser = entry.getKey();
                         ParticipantInfo pInfo = entry.getValue();
 
                         if (!existingUser.equals(username) && Server.clients.containsKey(existingUser)) {
+
                             Server.clients.get(existingUser).sendMessage(
                                     "GROUP_CALL_PARTICIPANT " + groupToJoin + " " + username + " " +
                                             this.clientIp + " " + joinPort
                             );
+
 
                             sendMessage(
                                     "GROUP_CALL_PARTICIPANT " + groupToJoin + " " + existingUser + " " +
@@ -303,7 +307,6 @@ public class ClientSession implements Runnable {
                         }
                     }
 
-                    // Agregar el nuevo participante
                     activeCall.addParticipant(username, this.clientIp, joinPort);
                     sendMessage("Te has unido a la llamada grupal '" + groupToJoin + "'");
                     break;
