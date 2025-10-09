@@ -222,7 +222,6 @@ public class Client {
 
             new Thread(() -> {
                 try {
-                    AudioCallCapturer.setRecieving(true);
                     AudioCallCapturer.startReception(listenPortB);
                 } catch (Exception e) {
                     System.out.println("Error en recepción de audio: " + e.getMessage());
@@ -231,7 +230,6 @@ public class Client {
 
             new Thread(() -> {
                 try {
-                    AudioCallSender.setSending(true);
                     AudioCallSender.startCall(ipA, portA);
                 } catch (Exception e) {
                     System.out.println("Error en envío de audio: " + e.getMessage());
