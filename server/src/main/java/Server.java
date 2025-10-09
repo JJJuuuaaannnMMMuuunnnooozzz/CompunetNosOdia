@@ -16,12 +16,23 @@ public class Server {
 
 
     public static void main(String[] args) throws IOException {
+
         int port = (args.length > 0) ? Integer.parseInt(args[0]) : PORT;
 
         ServerSocket serverSocket = new ServerSocket(port);
         System.out.println("Servidor escuchando en puerto " + port);
         InetAddress localAddress = InetAddress.getLocalHost();
         System.out.println("Servidor escuchando en IP " + localAddress.getHostAddress() + " y puerto " + port);
+
+        // Dentro del método main o constructor de Server.java
+
+        try {
+            PersistenceManager.init();
+            groups = PersistenceManager.loadGroups();
+            System.out.println("Grupos cargados desde persistencia: " + groups.keySet());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
 
         ExecutorService pool = Executors.newCachedThreadPool();

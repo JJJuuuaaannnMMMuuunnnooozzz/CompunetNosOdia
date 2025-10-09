@@ -1,0 +1,23 @@
+[
+  {
+    "timestamp": "1760021710061",
+    "from": "juan",
+    "to": "juan2",
+    "type": "text",
+    "content": "[juan -\u003e juan2]: Hola, Juan2!!"
+  },
+  {
+    "timestamp": "1760021729801",
+    "from": "juan",
+    "to": "juanes",
+    "type": "text",
+    "content": "[juan @ juanes]: Hola juanes!!!"
+  },
+  {
+    "timestamp": "1760021798160",
+    "from": "juan",
+    "to": "juan2",
+    "type": "voice",
+    "content": "server_history\\audio\\voice_juan_to_juan2_1760021798113.wav"
+  }
+]

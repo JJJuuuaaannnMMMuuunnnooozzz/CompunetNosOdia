@@ -21,6 +21,7 @@ public class AudioCallCapturer {
 
             DatagramSocket socket = new DatagramSocket(listeningPort);
             byte[] buffer = new byte[4096];
+            System.out.println("das");
             while(recieving) {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
@@ -42,7 +43,11 @@ public class AudioCallCapturer {
         recieving = false;
     }
 
-    public static void setRecieving(boolean recieve) { recieving = recieve; }
+    public static void setRecieving(boolean recieving) {
+        AudioCallCapturer.recieving = recieving;
+    }
+
+    
 
 
 
