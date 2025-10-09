@@ -255,7 +255,6 @@ public class ClientSession implements Runnable {
                         break;
                     }
 
-                    // Crear estructura para la llamada grupal
                     GroupCallInfo callInfo = new GroupCallInfo(groupNameCall);
                     callInfo.addParticipant(username, this.clientIp, initiatorPort);
                     Server.activeGroupCalls.put(groupNameCall, callInfo);

@@ -427,12 +427,9 @@ public class Client {
             String userLeft = parts[2];
             System.out.println("El usuario " + userLeft + " salió de la llamada grupal '" + groupName + "'.");
 
-            // Detener el sender específico para ese usuario
             Thread senderThread = groupCallSenders.remove(userLeft);
             if (senderThread != null) {
-                // El AudioCallSender se detendrá cuando se llame stopCall()
-                // pero como tenemos múltiples conexiones, necesitaríamos una implementación
-                // más sofisticada para detener solo una conexión específica
+
             }
         }
     }
