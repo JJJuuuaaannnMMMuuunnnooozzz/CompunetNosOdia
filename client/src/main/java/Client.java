@@ -40,7 +40,7 @@ public class Client {
                 continue;
             }
 
-            if (op == 9) {
+            if (op == 0) {
                 socket.close();
                 break;
             }
@@ -54,6 +54,9 @@ public class Client {
                 case 6 -> sendVoiceNoteToGroup();
                 case 7 -> doACall();
                 case 8 -> doGroupCall();
+                case 9 -> hangUpCall();
+                case 10 -> hangUpGroupCall();
+
 
                 default -> System.out.println("Opción no implementada aún.");
             }
@@ -62,6 +65,7 @@ public class Client {
 
     private static void showMenu() {
         System.out.println("\n--- MENÚ ---");
+        System.out.println("0. Salir");
         System.out.println("1. Crear grupo de chat");
         System.out.println("2. Añadir usuario a grupo");
         System.out.println("3. Enviar mensaje a usuario");
@@ -70,7 +74,8 @@ public class Client {
         System.out.println("6. Enviar nota de voz a grupo");
         System.out.println("7. Realizar llamada a usuario");
         System.out.println("8. Realizar llamada a grupo");
-        System.out.println("9. Salir");
+        System.out.println("9. Colgar llamada a usuario");
+        System.out.println("10. Colgar llamada a grupo");
         System.out.print("Elige opción: ");
     }
 
@@ -87,7 +92,13 @@ public class Client {
                         handleCallAccepted(resp);
                     } else if (resp.startsWith("VOICE_FROM")) {
                         processVoiceNote(resp);
-                    } else {
+                    } else if (resp.startsWith("GROUP_CALL_LEFT")) {
+                        handleGroupCallLeft(resp);
+                    }else if(resp.startsWith("CALL_ENDED")){
+                        handleCallEnded(resp);
+
+
+                    }else {
                         System.out.println(resp);
                     }
 
@@ -211,6 +222,7 @@ public class Client {
 
             new Thread(() -> {
                 try {
+                    AudioCallCapturer.setRecieving(true);
                     AudioCallCapturer.startReception(listenPortB);
                 } catch (Exception e) {
                     System.out.println("Error en recepción de audio: " + e.getMessage());
@@ -219,6 +231,7 @@ public class Client {
 
             new Thread(() -> {
                 try {
+                    AudioCallSender.setSending(true);
                     AudioCallSender.startCall(ipA, portA);
                 } catch (Exception e) {
                     System.out.println("Error en envío de audio: " + e.getMessage());
@@ -250,6 +263,7 @@ public class Client {
 
             new Thread(() -> {
                 try {
+                    AudioCallSender.setSending(true);
                     AudioCallSender.startCall(ipB, portB);
                 } catch (Exception e) {
                     System.out.println("Error en envío de audio a B: " + e.getMessage());
@@ -261,6 +275,23 @@ public class Client {
             System.out.println("Error procesando aceptación de llamada: " + e.getMessage());
         }
     }
+
+    private static void hangUpCall() {
+        try {
+            System.out.print("¿A quién deseas colgar la llamada?: ");
+            String user = sc.nextLine();
+
+            out.println("END_CALL " + user);
+
+            AudioCallSender.stopCall();
+            AudioCallCapturer.stopReception();
+            System.out.println("Llamada finalizada.");
+
+        } catch (Exception e) {
+            System.out.println("Error colgando llamada: " + e.getMessage());
+        }
+    }
+
 
 
     private static void doGroupCall() {
@@ -282,11 +313,12 @@ public class Client {
             String serverIp = parts[2];
             int port = Integer.parseInt(parts[3]);
 
-            System.out.println("Llamada grupal entrante en " + groupName);
-            System.out.println("Conectando automáticamente...");
+            System.out.println("Llamada grupal entrante: " + groupName);
+            System.out.println("Conectando a servidor " + serverIp + ":" + port);
 
             new Thread(() -> {
                 try {
+                    AudioCallSender.setSending(true);
                     AudioCallSender.startCall(serverIp, port);
                 } catch (Exception e) {
                     System.out.println("Error enviando audio: " + e.getMessage());
@@ -295,6 +327,7 @@ public class Client {
 
             new Thread(() -> {
                 try {
+                    AudioCallCapturer.setRecieving(false);
                     AudioCallCapturer.startReception(port);
                 } catch (Exception e) {
                     System.out.println("Error recibiendo audio: " + e.getMessage());
@@ -305,6 +338,45 @@ public class Client {
             System.out.println("Error procesando llamada grupal: " + e.getMessage());
         }
     }
+
+
+    private static void handleCallEnded(String msg) {
+        try {
+            String[] parts = msg.split(" ");
+            String fromUser = parts[1];
+            System.out.println("Llamada finalizada por " + fromUser);
+            AudioCallSender.stopCall();
+            AudioCallCapturer.stopReception();
+        } catch (Exception e) {
+            System.out.println("Error al finalizar llamada: " + e.getMessage());
+        }
+    }
+
+    private static void hangUpGroupCall() {
+        try {
+            System.out.print("¿De qué grupo deseas salir de la llamada?: ");
+            String group = sc.nextLine();
+
+            out.println("END_GROUP_CALL " + group);
+            AudioCallSender.stopCall();
+            AudioCallCapturer.stopReception();
+            System.out.println("Has salido de la llamada grupal '" + group + "'.");
+        } catch (Exception e) {
+            System.out.println("Error colgando llamada grupal: " + e.getMessage());
+        }
+    }
+
+    private static void handleGroupCallLeft(String msg) {
+        String[] parts = msg.split(" ");
+        if (parts.length >= 3) {
+            String groupName = parts[1];
+            String userLeft = parts[2];
+            System.out.println("El usuario " + userLeft + " salió de la llamada grupal '" + groupName + "'.");
+        }
+    }
+
+
+
 
 
 

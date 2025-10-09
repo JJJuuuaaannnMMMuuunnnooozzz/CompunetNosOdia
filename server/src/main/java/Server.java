@@ -12,6 +12,9 @@ public class Server {
     // historial en memoria
     protected static List<String> history = new CopyOnWriteArrayList<>();
 
+    protected static Map<String, GroupCallServer> activeGroupCalls = new ConcurrentHashMap<>();
+
+
     public static void main(String[] args) throws IOException {
         int port = (args.length > 0) ? Integer.parseInt(args[0]) : PORT;
 

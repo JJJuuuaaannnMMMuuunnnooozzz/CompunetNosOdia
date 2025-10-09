@@ -26,7 +26,6 @@ public class ClientSession implements Runnable {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
 
-            // Registro inicial
             out.println("Ingresa tu nombre de usuario:");
             username = in.readLine();
 
@@ -223,6 +222,23 @@ public class ClientSession implements Runnable {
                     }
                     break;
 
+                case "END_CALL":
+                    if (parts.length < 2) {
+                        sendMessage("Uso: END_CALL <usuario>");
+                        break;
+                    }
+                    String targetEndUser = parts[1];
+                    ClientSession targetEndSession = Server.clients.get(targetEndUser);
+
+                    if (targetEndSession != null) {
+                        targetEndSession.sendMessage("CALL_ENDED " + this.username);
+                        sendMessage("Has colgado la llamada con " + targetEndUser);
+                    } else {
+                        sendMessage("El usuario " + targetEndUser + " no está conectado.");
+                    }
+                    break;
+
+
                 case "CALL_GROUP":
                     if (parts.length < 2) {
                         sendMessage("Uso: CALL_GROUP <nombreGrupo>");
@@ -237,16 +253,63 @@ public class ClientSession implements Runnable {
                         break;
                     }
 
+                    if (Server.activeGroupCalls.containsKey(groupNameCall)) {
+                        sendMessage("Ya hay una llamada activa en este grupo.");
+                        break;
+                    }
+
+                    int port = 7000 + new Random().nextInt(1000);
+                    //ServerSocket server = new ServerSocket(port);
+
+
+                    GroupCallServer callServer = new GroupCallServer(groupNameCall, members, port);
+                    new Thread(callServer).start();
+                    Server.activeGroupCalls.put(groupNameCall, callServer);
+
                     for (String member : members) {
-                        if (!member.equals(username)) {
-                            ClientSession s = Server.clients.get(member);
-                            if (s != null) {
-                                s.sendMessage("CALL_FROM " + this.username + " " + this.clientIp + " " /**+ this.udpPort*/);
-                            }
+                        port = 7000 + new Random().nextInt(1000);
+
+                        if (Server.clients.containsKey(member)) {
+                            Server.clients.get(member)
+                                    .sendMessage("INCOMING_GROUP_CALL " + groupNameCall + " " +
+                                            InetAddress.getLocalHost().getHostAddress() + " " + port);
+                        }
+                    }
+                    sendMessage("Llamada grupal iniciada en puerto " + port);
+                    break;
+
+                case "END_GROUP_CALL":
+                    if (parts.length < 2) {
+                        sendMessage("Uso: END_GROUP_CALL <nombreGrupo>");
+                        break;
+                    }
+
+                    String groupToEnd = parts[1];
+
+                    GroupCallServer activeCall = Server.activeGroupCalls.get(groupToEnd);
+                    if (activeCall == null) {
+                        sendMessage("No hay llamada activa para el grupo '" + groupToEnd + "'.");
+                        break;
+                    }
+
+                    // Remover al usuario de la llamada grupal
+                    activeCall.removeParticipant(username);
+
+                    // Notificar a los demás
+                    for (String member : activeCall.getParticipants()) {
+                        if (Server.clients.containsKey(member)) {
+                            Server.clients.get(member).sendMessage("GROUP_CALL_LEFT " + groupToEnd + " " + username);
                         }
                     }
 
-                    sendMessage("Llamada enviada al grupo '" + groupNameCall + "'.");
+                    sendMessage("Has salido de la llamada grupal '" + groupToEnd + "'.");
+
+                    // Si ya no quedan participantes, terminar la llamada grupal
+                    if (activeCall.getParticipants().isEmpty()) {
+                        Server.activeGroupCalls.remove(groupToEnd);
+                        activeCall.stopServer();
+                        System.out.println("Llamada grupal '" + groupToEnd + "' finalizada (sin participantes).");
+                    }
                     break;
 
 
@@ -257,7 +320,13 @@ public class ClientSession implements Runnable {
         } catch (Exception e) {
             sendMessage("Error al procesar comando: " + e.getMessage());
         }
+
     }
+
+
+
+
+
 
 
 }

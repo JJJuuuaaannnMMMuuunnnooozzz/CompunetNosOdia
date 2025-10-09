@@ -45,4 +45,6 @@ public class AudioCallSender {
     public static void stopCall() {
         sending = false;
     }
+
+    public static void setSending(boolean sending) { AudioCallSender.sending = sending; }
 }

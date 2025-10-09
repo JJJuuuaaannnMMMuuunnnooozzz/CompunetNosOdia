@@ -42,6 +42,8 @@ public class AudioCallCapturer {
         recieving = false;
     }
 
+    public static void setRecieving(boolean recieve) { recieving = recieve; }
+
 
 
 }
