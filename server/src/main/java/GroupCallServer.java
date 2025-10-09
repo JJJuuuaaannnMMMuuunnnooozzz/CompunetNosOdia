@@ -33,6 +33,7 @@ public class GroupCallServer implements Runnable {
                         new InetSocketAddress(packet.getAddress(), packet.getPort()));
 
                 for (InetSocketAddress addr : activeClients.values()) {
+                    System.out.println("deede   " + addr + " \n");
                     if (!addr.equals(new InetSocketAddress(packet.getAddress(), packet.getPort()))) {
                         DatagramPacket outPacket = new DatagramPacket(packet.getData(), packet.getLength(), addr);
                         socket.send(outPacket);

@@ -263,7 +263,6 @@ public class Client {
 
             new Thread(() -> {
                 try {
-                    AudioCallSender.setSending(true);
                     AudioCallSender.startCall(ipB, portB);
                 } catch (Exception e) {
                     System.out.println("Error en envío de audio a B: " + e.getMessage());
@@ -318,7 +317,6 @@ public class Client {
 
             new Thread(() -> {
                 try {
-                    AudioCallSender.setSending(true);
                     AudioCallSender.startCall(serverIp, port);
                 } catch (Exception e) {
                     System.out.println("Error enviando audio: " + e.getMessage());
@@ -327,7 +325,6 @@ public class Client {
 
             new Thread(() -> {
                 try {
-                    AudioCallCapturer.setRecieving(false);
                     AudioCallCapturer.startReception(port);
                 } catch (Exception e) {
                     System.out.println("Error recibiendo audio: " + e.getMessage());
