@@ -10,7 +10,7 @@ public class ClientSession implements Runnable {
     private String username;
     private String clientIp;
 
-    public ClientSession(Socket socket) {
+    public ClientSession(Socket socket) throws IOException {
         InetSocketAddress remote = (InetSocketAddress) socket.getRemoteSocketAddress();
         this.clientIp = remote.getAddress().getHostAddress();
         this.socket = socket;
@@ -44,8 +44,16 @@ public class ClientSession implements Runnable {
                 return;
             }
 
+            if(clientIp.equals("127.0.0.1")) {
+                out.println("Estas iniciando un cliente en localhost, ingrese la ip del cliente: \n");
+                this.clientIp = in.readLine();
+            }
+
+
             Server.clients.put(username, this);
             out.println("Bienvenido " + username + "!");
+
+
 
             String line;
             while ((line = in.readLine()) != null) {

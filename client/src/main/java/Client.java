@@ -27,11 +27,23 @@ public class Client {
         out = new PrintWriter(socket.getOutputStream(), true);
         sc = new Scanner(System.in);
 
+
         String serverMsg = in.readLine();
         System.out.println(serverMsg);
 
         String username = sc.nextLine();
         out.println(username);
+
+        String server = in.readLine();
+        System.out.println(server);
+
+        if (server != null && server.contains("localhost")) {
+            String ip = sc.nextLine();
+            out.println(ip);
+            System.out.println(in.readLine()); // leer el "Bienvenido ..."
+        }
+
+
 
         startReceiverThread();
 
@@ -407,7 +419,6 @@ public class Client {
 
             out.println("END_GROUP_CALL " + group);
 
-            // Detener todos los senders
             for (Thread sender : groupCallSenders.values()) {
                 AudioCallSender.stopCall();
             }
@@ -427,12 +438,12 @@ public class Client {
             String userLeft = parts[2];
             System.out.println("El usuario " + userLeft + " salió de la llamada grupal '" + groupName + "'.");
 
-            // Detener el sender específico para ese usuario
+
             Thread senderThread = groupCallSenders.remove(userLeft);
             if (senderThread != null) {
-                // El AudioCallSender se detendrá cuando se llame stopCall()
-                // pero como tenemos múltiples conexiones, necesitaríamos una implementación
-                // más sofisticada para detener solo una conexión específica
+
+
+
             }
         }
     }
