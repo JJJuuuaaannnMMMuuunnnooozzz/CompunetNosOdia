@@ -8,9 +8,13 @@ public class ClientSession implements Runnable {
     private BufferedReader in;
     private PrintWriter out;
     private String username;
+    private String clientIp;
 
     public ClientSession(Socket socket) {
+        InetSocketAddress remote = (InetSocketAddress) socket.getRemoteSocketAddress();
+        this.clientIp = remote.getAddress().getHostAddress();
         this.socket = socket;
+
     }
 
     public void sendMessage(String msg) {
@@ -22,7 +26,6 @@ public class ClientSession implements Runnable {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
 
-            // Registro inicial
             out.println("Ingresa tu nombre de usuario:");
             username = in.readLine();
 
@@ -164,7 +167,6 @@ public class ClientSession implements Runnable {
                     String groupName = parts[1];
                     String audio64Group = parts[2];
 
-                    // Verificar que el grupo exista
                     if (!Server.groups.containsKey(groupName)) {
                         sendMessage("El grupo '" + groupName + "' no existe.");
                         break;
@@ -179,7 +181,137 @@ public class ClientSession implements Runnable {
                     }
 
                     sendMessage("Nota de voz enviada al grupo '" + groupName + "'.");
+
                     break;
+
+
+                case "CALL_USER":
+                    if (parts.length < 3) {
+                        sendMessage("Uso: CALL_USER <usuario> <puertoUDP>");
+                        break;
+                    }
+
+                    String targetUserCall = parts[1];
+                    int callerUdpPort = Integer.parseInt(parts[2]);
+                    ClientSession targetSession = Server.clients.get(targetUserCall);
+
+                    if (targetSession != null) {
+                        targetSession.sendMessage("CALL_FROM " + this.username + " " + this.clientIp + " " + callerUdpPort);
+                        System.out.println("eoooooooooooooooooo " + this.clientIp);
+                        sendMessage("Llamando a " + targetUserCall + "...");
+
+                    } else {
+                        sendMessage("Usuario '" + targetUserCall + "' no encontrado o desconectado.");
+                    }
+                    break;
+
+                case "ACCEPT_CALL":
+                    if (parts.length < 3) {
+                        sendMessage("Uso: ACCEPT_CALL <usuario> <puertoUDP>");
+                        break;
+                    }
+                    String targetUserAccept = parts[1];
+                    int receiverUdpPort = Integer.parseInt(parts[2]);
+                    ClientSession callerSession = Server.clients.get(targetUserAccept);
+
+                    if (callerSession != null) {
+                        callerSession.sendMessage("CALL_ACCEPTED " + this.username + " " + this.clientIp + " " + receiverUdpPort);
+                        sendMessage("Llamada aceptada, notificando a " + targetUserAccept);
+                    } else {
+                        sendMessage("El usuario que llamó (" + targetUserAccept + ") ya se desconectó.");
+                    }
+                    break;
+
+                case "END_CALL":
+                    if (parts.length < 2) {
+                        sendMessage("Uso: END_CALL <usuario>");
+                        break;
+                    }
+                    String targetEndUser = parts[1];
+                    ClientSession targetEndSession = Server.clients.get(targetEndUser);
+
+                    if (targetEndSession != null) {
+                        targetEndSession.sendMessage("CALL_ENDED " + this.username);
+                        sendMessage("Has colgado la llamada con " + targetEndUser);
+                    } else {
+                        sendMessage("El usuario " + targetEndUser + " no está conectado.");
+                    }
+                    break;
+
+
+                case "CALL_GROUP":
+                    if (parts.length < 2) {
+                        sendMessage("Uso: CALL_GROUP <nombreGrupo>");
+                        break;
+                    }
+
+                    String groupNameCall = parts[1];
+                    Set<String> members = Server.groups.get(groupNameCall);
+
+                    if (members == null) {
+                        sendMessage("El grupo '" + groupNameCall + "' no existe.");
+                        break;
+                    }
+
+                    if (Server.activeGroupCalls.containsKey(groupNameCall)) {
+                        sendMessage("Ya hay una llamada activa en este grupo.");
+                        break;
+                    }
+
+                    int port = 7000 + new Random().nextInt(1000);
+                    //ServerSocket server = new ServerSocket(port);
+
+
+                    GroupCallServer callServer = new GroupCallServer(groupNameCall, members, port);
+                    new Thread(callServer).start();
+                    Server.activeGroupCalls.put(groupNameCall, callServer);
+
+                    for (String member : members) {
+                        port = 7000 + new Random().nextInt(1000);
+
+                        if (Server.clients.containsKey(member)) {
+                            Server.clients.get(member)
+                                    .sendMessage("INCOMING_GROUP_CALL " + groupNameCall + " " +
+                                            InetAddress.getLocalHost().getHostAddress() + " " + port);
+                        }
+                    }
+                    sendMessage("Llamada grupal iniciada en puerto " + port);
+                    break;
+
+                case "END_GROUP_CALL":
+                    if (parts.length < 2) {
+                        sendMessage("Uso: END_GROUP_CALL <nombreGrupo>");
+                        break;
+                    }
+
+                    String groupToEnd = parts[1];
+
+                    GroupCallServer activeCall = Server.activeGroupCalls.get(groupToEnd);
+                    if (activeCall == null) {
+                        sendMessage("No hay llamada activa para el grupo '" + groupToEnd + "'.");
+                        break;
+                    }
+
+                    // Remover al usuario de la llamada grupal
+                    activeCall.removeParticipant(username);
+
+                    // Notificar a los demás
+                    for (String member : activeCall.getParticipants()) {
+                        if (Server.clients.containsKey(member)) {
+                            Server.clients.get(member).sendMessage("GROUP_CALL_LEFT " + groupToEnd + " " + username);
+                        }
+                    }
+
+                    sendMessage("Has salido de la llamada grupal '" + groupToEnd + "'.");
+
+                    // Si ya no quedan participantes, terminar la llamada grupal
+                    if (activeCall.getParticipants().isEmpty()) {
+                        Server.activeGroupCalls.remove(groupToEnd);
+                        activeCall.stopServer();
+                        System.out.println("Llamada grupal '" + groupToEnd + "' finalizada (sin participantes).");
+                    }
+                    break;
+
 
                 default:
                     sendMessage("Comando no reconocido.");
@@ -188,5 +320,13 @@ public class ClientSession implements Runnable {
         } catch (Exception e) {
             sendMessage("Error al procesar comando: " + e.getMessage());
         }
+
     }
+
+
+
+
+
+
+
 }

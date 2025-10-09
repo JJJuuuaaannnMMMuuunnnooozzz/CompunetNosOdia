@@ -12,10 +12,17 @@ public class Server {
     // historial en memoria
     protected static List<String> history = new CopyOnWriteArrayList<>();
 
+    protected static Map<String, GroupCallServer> activeGroupCalls = new ConcurrentHashMap<>();
+
+
     public static void main(String[] args) throws IOException {
         int port = (args.length > 0) ? Integer.parseInt(args[0]) : PORT;
+
         ServerSocket serverSocket = new ServerSocket(port);
         System.out.println("Servidor escuchando en puerto " + port);
+        InetAddress localAddress = InetAddress.getLocalHost();
+        System.out.println("Servidor escuchando en IP " + localAddress.getHostAddress() + " y puerto " + port);
+
 
         ExecutorService pool = Executors.newCachedThreadPool();
 
