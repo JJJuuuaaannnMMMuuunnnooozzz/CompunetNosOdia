@@ -2,6 +2,8 @@ import java.io.*;
 import java.net.*;
 import java.util.Scanner;
 import java.util.Base64;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Client {
 
@@ -9,6 +11,9 @@ public class Client {
     private static BufferedReader in;
     private static Socket socket;
     private static Scanner sc;
+
+    // Mapa para mantener los AudioCallSender activos en llamadas grupales
+    private static Map<String, Thread> groupCallSenders = new ConcurrentHashMap<>();
 
     public static void main(String[] args) throws Exception {
 
@@ -22,11 +27,23 @@ public class Client {
         out = new PrintWriter(socket.getOutputStream(), true);
         sc = new Scanner(System.in);
 
+
         String serverMsg = in.readLine();
         System.out.println(serverMsg);
 
         String username = sc.nextLine();
         out.println(username);
+
+        String server = in.readLine();
+        System.out.println(server);
+
+        if (server != null && server.contains("localhost")) {
+            String ip = sc.nextLine();
+            out.println(ip);
+            System.out.println(in.readLine()); // leer el "Bienvenido ..."
+        }
+
+
 
         startReceiverThread();
 
@@ -56,8 +73,6 @@ public class Client {
                 case 8 -> doGroupCall();
                 case 9 -> hangUpCall();
                 case 10 -> hangUpGroupCall();
-
-
                 default -> System.out.println("Opción no implementada aún.");
             }
         }
@@ -86,22 +101,21 @@ public class Client {
                 while ((resp = in.readLine()) != null) {
                     if (resp.startsWith("CALL_FROM")) {
                         handleIncomingCall(resp);
-                    }else if (resp.startsWith("INCOMING_GROUP_CALL")) {
+                    } else if (resp.startsWith("INCOMING_GROUP_CALL")) {
                         handleIncomingGroupCall(resp);
+                    } else if (resp.startsWith("GROUP_CALL_PARTICIPANT")) {
+                        handleNewGroupCallParticipant(resp);
                     } else if (resp.startsWith("CALL_ACCEPTED")) {
                         handleCallAccepted(resp);
                     } else if (resp.startsWith("VOICE_FROM")) {
                         processVoiceNote(resp);
                     } else if (resp.startsWith("GROUP_CALL_LEFT")) {
                         handleGroupCallLeft(resp);
-                    }else if(resp.startsWith("CALL_ENDED")){
+                    } else if (resp.startsWith("CALL_ENDED")) {
                         handleCallEnded(resp);
-
-
-                    }else {
+                    } else {
                         System.out.println(resp);
                     }
-
                 }
             } catch (IOException e) {
                 System.out.println("Conexión cerrada.");
@@ -200,7 +214,6 @@ public class Client {
                 }
             }).start();
 
-
             out.println("CALL_USER " + user + " " + listenPort);
             System.out.println("Llamando a " + user + " desde puerto " + listenPort + "...");
         } catch (Exception e) {
@@ -208,12 +221,11 @@ public class Client {
         }
     }
 
-
     private static void handleIncomingCall(String msg) {
         try {
             String[] parts = msg.split(" ");
             String fromUser = parts[1];
-            String ipA = parts[2]; // IP de A
+            String ipA = parts[2];
             int portA = Integer.parseInt(parts[3]);
 
             int listenPortB = 8889;
@@ -222,7 +234,6 @@ public class Client {
 
             new Thread(() -> {
                 try {
-                    AudioCallCapturer.setRecieving(true);
                     AudioCallCapturer.startReception(listenPortB);
                 } catch (Exception e) {
                     System.out.println("Error en recepción de audio: " + e.getMessage());
@@ -231,7 +242,6 @@ public class Client {
 
             new Thread(() -> {
                 try {
-                    AudioCallSender.setSending(true);
                     AudioCallSender.startCall(ipA, portA);
                 } catch (Exception e) {
                     System.out.println("Error en envío de audio: " + e.getMessage());
@@ -244,9 +254,7 @@ public class Client {
             e.printStackTrace();
             System.out.println("Error procesando llamada entrante: " + e.getMessage());
         }
-
     }
-
 
     private static void sendAcceptCall(String user, int port) {
         out.println("ACCEPT_CALL " + user + " " + port);
@@ -263,7 +271,6 @@ public class Client {
 
             new Thread(() -> {
                 try {
-                    AudioCallSender.setSending(true);
                     AudioCallSender.startCall(ipB, portB);
                 } catch (Exception e) {
                     System.out.println("Error en envío de audio a B: " + e.getMessage());
@@ -292,53 +299,106 @@ public class Client {
         }
     }
 
-
-
     private static void doGroupCall() {
         try {
             System.out.print("Nombre del grupo: ");
             String group = sc.nextLine();
-            out.println("CALL_GROUP " + group);
+
+            // Puerto aleatorio para recibir audio en esta llamada grupal
+            int listenPort = 9000 + (int)(Math.random() * 1000);
+
+            // Iniciar recepción de audio
+            new Thread(() -> {
+                try {
+                    AudioCallCapturer.startReception(listenPort);
+                } catch (Exception e) {
+                    System.out.println("Error en recepción de audio: " + e.getMessage());
+                }
+            }).start();
+
+            out.println("CALL_GROUP " + group + " " + listenPort);
             System.out.println("Iniciando llamada grupal con " + group + "...");
         } catch (Exception e) {
             System.out.println("Error iniciando llamada grupal: " + e.getMessage());
         }
     }
 
-
     private static void handleIncomingGroupCall(String msg) {
         try {
             String[] parts = msg.split(" ");
             String groupName = parts[1];
-            String serverIp = parts[2];
-            int port = Integer.parseInt(parts[3]);
+            String callerUser = parts[2];
+            String callerIp = parts[3];
+            int callerPort = Integer.parseInt(parts[4]);
 
-            System.out.println("Llamada grupal entrante: " + groupName);
-            System.out.println("Conectando a servidor " + serverIp + ":" + port);
+            System.out.println("Llamada grupal entrante del grupo: " + groupName + " iniciada por " + callerUser);
 
+            // Puerto aleatorio para recibir audio
+            int listenPort = 9000 + (int)(Math.random() * 1000);
+
+            // Iniciar recepción de audio
             new Thread(() -> {
                 try {
-                    AudioCallSender.setSending(true);
-                    AudioCallSender.startCall(serverIp, port);
+                    AudioCallCapturer.startReception(listenPort);
                 } catch (Exception e) {
-                    System.out.println("Error enviando audio: " + e.getMessage());
+                    System.out.println("Error en recepción de audio: " + e.getMessage());
                 }
             }).start();
 
-            new Thread(() -> {
+            // Conectarse al usuario que inició la llamada
+            String participantKey = callerUser;
+            Thread senderThread = new Thread(() -> {
                 try {
-                    AudioCallCapturer.setRecieving(false);
-                    AudioCallCapturer.startReception(port);
+                    AudioCallSender.startCall(callerIp, callerPort);
                 } catch (Exception e) {
-                    System.out.println("Error recibiendo audio: " + e.getMessage());
+                    System.out.println("Error enviando audio a " + callerUser + ": " + e.getMessage());
                 }
-            }).start();
+            });
+            senderThread.start();
+            groupCallSenders.put(participantKey, senderThread);
+
+            // Notificar al servidor que estamos en la llamada
+            out.println("JOIN_GROUP_CALL " + groupName + " " + listenPort);
 
         } catch (Exception e) {
             System.out.println("Error procesando llamada grupal: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
+    private static void handleNewGroupCallParticipant(String msg) {
+        try {
+            String[] parts = msg.split(" ");
+            String groupName = parts[1];
+            String participantUser = parts[2];
+            String participantIp = parts[3];
+            int participantPort = Integer.parseInt(parts[4]);
+
+            System.out.println("Nuevo participante en llamada grupal '" + groupName + "': " + participantUser);
+
+            // Crear un nuevo thread para enviar audio a este participante
+            String participantKey = participantUser;
+
+            // Evitar duplicados
+            if (groupCallSenders.containsKey(participantKey)) {
+                return;
+            }
+
+            Thread senderThread = new Thread(() -> {
+                try {
+                    AudioCallSender.startCall(participantIp, participantPort);
+                } catch (Exception e) {
+                    System.out.println("Error enviando audio a " + participantUser + ": " + e.getMessage());
+                }
+            });
+            senderThread.start();
+            groupCallSenders.put(participantKey, senderThread);
+
+        } catch (Exception e) {
+            System.out.println("Error procesando nuevo participante: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
 
     private static void handleCallEnded(String msg) {
         try {
@@ -358,7 +418,12 @@ public class Client {
             String group = sc.nextLine();
 
             out.println("END_GROUP_CALL " + group);
-            AudioCallSender.stopCall();
+
+            for (Thread sender : groupCallSenders.values()) {
+                AudioCallSender.stopCall();
+            }
+            groupCallSenders.clear();
+
             AudioCallCapturer.stopReception();
             System.out.println("Has salido de la llamada grupal '" + group + "'.");
         } catch (Exception e) {
@@ -372,15 +437,14 @@ public class Client {
             String groupName = parts[1];
             String userLeft = parts[2];
             System.out.println("El usuario " + userLeft + " salió de la llamada grupal '" + groupName + "'.");
+
+
+            Thread senderThread = groupCallSenders.remove(userLeft);
+            if (senderThread != null) {
+
+
+
+            }
         }
     }
-
-
-
-
-
-
-
-
-
 }

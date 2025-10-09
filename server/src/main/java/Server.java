@@ -12,7 +12,7 @@ public class Server {
     // historial en memoria
     protected static List<String> history = new CopyOnWriteArrayList<>();
 
-    protected static Map<String, GroupCallServer> activeGroupCalls = new ConcurrentHashMap<>();
+    protected static Map<String, GroupCallInfo> activeGroupCalls = new ConcurrentHashMap<>();
 
 
     public static void main(String[] args) throws IOException {
