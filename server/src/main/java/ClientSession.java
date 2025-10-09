@@ -259,7 +259,6 @@ public class ClientSession implements Runnable {
                     callInfo.addParticipant(username, this.clientIp, initiatorPort);
                     Server.activeGroupCalls.put(groupNameCall, callInfo);
 
-                    // Notificar a todos los demás miembros del grupo
                     for (String member : members) {
                         if (!member.equals(username) && Server.clients.containsKey(member)) {
                             Server.clients.get(member).sendMessage(
@@ -287,19 +286,16 @@ public class ClientSession implements Runnable {
                         break;
                     }
 
-                    // Notificar a todos los participantes existentes sobre el nuevo participante
                     for (Map.Entry<String, ParticipantInfo> entry : activeCall.getParticipants().entrySet()) {
                         String existingUser = entry.getKey();
                         ParticipantInfo pInfo = entry.getValue();
 
                         if (!existingUser.equals(username) && Server.clients.containsKey(existingUser)) {
-                            // Notificar al participante existente sobre el nuevo
                             Server.clients.get(existingUser).sendMessage(
                                     "GROUP_CALL_PARTICIPANT " + groupToJoin + " " + username + " " +
                                             this.clientIp + " " + joinPort
                             );
 
-                            // Notificar al nuevo participante sobre el existente
                             sendMessage(
                                     "GROUP_CALL_PARTICIPANT " + groupToJoin + " " + existingUser + " " +
                                             pInfo.ip + " " + pInfo.port
@@ -326,10 +322,8 @@ public class ClientSession implements Runnable {
                         break;
                     }
 
-                    // Remover al participante
                     callToEnd.removeParticipant(username);
 
-                    // Notificar a los demás participantes
                     for (String participant : callToEnd.getParticipants().keySet()) {
                         if (Server.clients.containsKey(participant)) {
                             Server.clients.get(participant).sendMessage("GROUP_CALL_LEFT " + groupToEnd + " " + username);
@@ -338,7 +332,6 @@ public class ClientSession implements Runnable {
 
                     sendMessage("Has salido de la llamada grupal '" + groupToEnd + "'.");
 
-                    // Si ya no quedan participantes, terminar la llamada grupal
                     if (callToEnd.getParticipants().isEmpty()) {
                         Server.activeGroupCalls.remove(groupToEnd);
                         System.out.println("Llamada grupal '" + groupToEnd + "' finalizada (sin participantes).");
