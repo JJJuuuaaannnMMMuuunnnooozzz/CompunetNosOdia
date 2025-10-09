@@ -11,8 +11,10 @@ public class ClientSession implements Runnable {
     private String clientIp;
 
     public ClientSession(Socket socket) {
+        InetSocketAddress remote = (InetSocketAddress) socket.getRemoteSocketAddress();
+        this.clientIp = remote.getAddress().getHostAddress();
         this.socket = socket;
-        this.clientIp = socket.getInetAddress().getHostAddress();
+
     }
 
     public void sendMessage(String msg) {
@@ -166,7 +168,6 @@ public class ClientSession implements Runnable {
                     String groupName = parts[1];
                     String audio64Group = parts[2];
 
-                    // Verificar que el grupo exista
                     if (!Server.groups.containsKey(groupName)) {
                         sendMessage("El grupo '" + groupName + "' no existe.");
                         break;
@@ -197,6 +198,7 @@ public class ClientSession implements Runnable {
 
                     if (targetSession != null) {
                         targetSession.sendMessage("CALL_FROM " + this.username + " " + this.clientIp + " " + callerUdpPort);
+                        System.out.println("eoooooooooooooooooo " + this.clientIp);
                         sendMessage("Llamando a " + targetUserCall + "...");
 
                     } else {

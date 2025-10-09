@@ -242,13 +242,12 @@ public class Client {
     private static void handleCallAccepted(String msg) {
         try {
             String[] parts = msg.split(" ");
-            String fromUser = parts[1]; // Usuario B
-            String ipB = parts[2]; // IP de B
-            int portB = Integer.parseInt(parts[3]); // Puerto de recepción de B
+            String fromUser = parts[1];
+            String ipB = parts[2];
+            int portB = Integer.parseInt(parts[3]);
 
             System.out.println(fromUser + " aceptó la llamada. Conectando audio a " + ipB + ":" + portB + "...");
 
-            // Cliente A (el que llamó) ya está escuchando. Ahora debe iniciar el envío a B.
             new Thread(() -> {
                 try {
                     AudioCallSender.startCall(ipB, portB);
