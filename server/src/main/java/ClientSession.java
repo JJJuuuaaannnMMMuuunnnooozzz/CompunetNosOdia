@@ -75,7 +75,7 @@ public class ClientSession implements Runnable {
 
     private void processCommand(String line) {
         try {
-            String[] parts = line.split(" ", 5);
+            String[] parts = line.split(" ", 3);
             String cmd = parts[0];
 
             switch (cmd) {
@@ -178,11 +178,14 @@ public class ClientSession implements Runnable {
                     String groupName = parts[1];
                     String audio64Group = parts[2];
 
+                    // Verificar que el grupo exista
                     if (!Server.groups.containsKey(groupName)) {
                         sendMessage("El grupo '" + groupName + "' no existe.");
                         break;
                     }
 
+                    // Reenviar la nota de voz a todos los miembros conectados del grupo (excepto al
+                    // emisor)
                     for (String member : Server.groups.get(groupName)) {
                         if (!member.equals(username) && Server.clients.containsKey(member)) {
                             Server.clients.get(member).sendMessage("VOICE_FROM " + username + " " + audio64Group);
@@ -190,6 +193,7 @@ public class ClientSession implements Runnable {
                     }
 
                     sendMessage("Nota de voz enviada al grupo '" + groupName + "'.");
+
                     break;
 
                 case "CALL_USER":
