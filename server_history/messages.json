@@ -1,0 +1,44 @@
+[
+  {
+    "timestamp": "1760048615348",
+    "from": "juan",
+    "to": "juan2",
+    "type": "text",
+    "content": "[juan -\u003e juan2]: Hola,"
+  },
+  {
+    "timestamp": "1760048632385",
+    "from": "juan",
+    "to": "juanes",
+    "type": "text",
+    "content": "[juan @ juanes]: hola"
+  },
+  {
+    "timestamp": "1760048656107",
+    "from": "juan",
+    "to": "juan2",
+    "type": "text",
+    "content": "[juan -\u003e juan2]: dsdsdsfsf"
+  },
+  {
+    "timestamp": "1760048673150",
+    "from": "juan",
+    "to": "juan2",
+    "type": "text",
+    "content": "[juan -\u003e juan2]: hola"
+  },
+  {
+    "timestamp": "1760048695651",
+    "from": "juan",
+    "to": "juan2",
+    "type": "voice",
+    "content": "server_history\\audio\\voice_juan_to_juan2_1760048695610.wav"
+  },
+  {
+    "timestamp": "1760059611492",
+    "from": "s",
+    "to": "j",
+    "type": "voice",
+    "content": "server_history\\audio\\voice_s_to_j_1760059611463.wav"
+  }
+]

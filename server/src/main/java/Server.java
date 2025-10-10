@@ -2,6 +2,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
+import com.google.gson.Gson;
 
 public class Server {
     private static final int PORT = 9090; 
@@ -23,6 +24,13 @@ public class Server {
         InetAddress localAddress = InetAddress.getLocalHost();
         System.out.println("Servidor escuchando en IP " + localAddress.getHostAddress() + " y puerto " + port);
 
+         try {
+            PersistenceManager.init();
+            groups = PersistenceManager.loadGroups();
+            System.out.println("Grupos cargados desde persistencia: " + groups.keySet());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         ExecutorService pool = Executors.newCachedThreadPool();
 

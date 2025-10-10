@@ -75,7 +75,7 @@ public class ClientSession implements Runnable {
 
     private void processCommand(String line) {
         try {
-            String[] parts = line.split(" ", 5);
+            String[] parts = line.split(" ", 3);
             String cmd = parts[0];
 
             switch (cmd) {
@@ -90,6 +90,7 @@ public class ClientSession implements Runnable {
 
                     if (Server.clients.containsKey(user)) {
                         Server.clients.get(user).sendMessage(msgU);
+                        PersistenceManager.saveMessage(username, user, "text", msgU);
                         sendMessage("Mensaje enviado a " + user);
                     } else {
                         sendMessage("Usuario '" + user + "' no encontrado.");
@@ -107,6 +108,7 @@ public class ClientSession implements Runnable {
                     } else {
                         Server.groups.put(group, ConcurrentHashMap.newKeySet());
                         Server.groups.get(group).add(username);
+                        PersistenceManager.saveGroups(Server.groups);
                         sendMessage("Grupo '" + group + "' creado y te uniste.");
                     }
                     break;
@@ -129,6 +131,7 @@ public class ClientSession implements Runnable {
                     }
 
                     Server.groups.get(g).add(targetUser);
+                    PersistenceManager.saveGroups(Server.groups);
                     sendMessage("Usuario '" + targetUser + "' agregado al grupo '" + g + "'.");
                     Server.clients.get(targetUser).sendMessage("Has sido agregado al grupo '" + g + "'.");
                     break;
@@ -148,6 +151,7 @@ public class ClientSession implements Runnable {
                                 Server.clients.get(member).sendMessage(msgG);
                             }
                         }
+                        PersistenceManager.saveMessage(username, gName, "text", msgG);
                         sendMessage("Mensaje enviado al grupo '" + gName + "'.");
                     } else {
                         sendMessage("Grupo '" + gName + "' no existe.");
@@ -162,8 +166,12 @@ public class ClientSession implements Runnable {
                     String toUser = parts[1];
                     String audio64 = parts[2];
 
+                    byte[] audioBytes = Base64.getDecoder().decode(audio64);
+                    String filePath = PersistenceManager.saveAudio(audioBytes, "voice_" + username + "_to_" + toUser);
+
                     if (Server.clients.containsKey(toUser)) {
                         Server.clients.get(toUser).sendMessage("VOICE_FROM " + username + " " + audio64);
+                        PersistenceManager.saveMessage(username, toUser, "voice", filePath);
                         sendMessage("Nota de voz enviada a " + toUser);
                     } else {
                         sendMessage("Usuario '" + toUser + "' no encontrado.");
@@ -178,18 +186,29 @@ public class ClientSession implements Runnable {
                     String groupName = parts[1];
                     String audio64Group = parts[2];
 
+
+                    // Verificar que el grupo exista
+
+                    byte[] GAudioBytes = Base64.getDecoder().decode(audio64Group);
+                    String filePathG = PersistenceManager.saveAudio(GAudioBytes, "voice_" + username + "_to_" + groupName);
+
+
                     if (!Server.groups.containsKey(groupName)) {
                         sendMessage("El grupo '" + groupName + "' no existe.");
                         break;
                     }
 
+                    // Reenviar la nota de voz a todos los miembros conectados del grupo (excepto al
+                    // emisor)
                     for (String member : Server.groups.get(groupName)) {
                         if (!member.equals(username) && Server.clients.containsKey(member)) {
                             Server.clients.get(member).sendMessage("VOICE_FROM " + username + " " + audio64Group);
                         }
                     }
 
+                    PersistenceManager.saveMessage(username, groupName, "voice", filePathG);
                     sendMessage("Nota de voz enviada al grupo '" + groupName + "'.");
+
                     break;
 
                 case "CALL_USER":
