@@ -3,10 +3,16 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
+
+import javax.sound.sampled.AudioFileFormat;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
 
 public class PersistenceManager {
     private static final String BASE_DIR = "server_history";
@@ -94,9 +100,20 @@ public class PersistenceManager {
 
     // -------- audio ----------
     public static synchronized String saveAudio(byte[] data, String prefix) throws IOException {
+        
         String filename = prefix + "_" + System.currentTimeMillis() + ".wav";
         Path path = Paths.get(AUDIO_DIR, filename);
-        Files.write(path, data, StandardOpenOption.CREATE);
+
+        // Define el mismo formato que usaste al grabar
+        AudioFormat format = new AudioFormat(44100, 16, 1, true, true);
+
+        // Crea un AudioInputStream a partir de los bytes PCM
+         try (ByteArrayInputStream bais = new ByteArrayInputStream(data);
+         AudioInputStream ais = new AudioInputStream(bais, format, data.length / format.getFrameSize())) {
+            AudioSystem.write(ais, AudioFileFormat.Type.WAVE, path.toFile());
+        }
+        
         return path.toString();
+
     }
 }
