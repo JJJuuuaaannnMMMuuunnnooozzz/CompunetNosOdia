@@ -79,6 +79,42 @@ public class ClientSession implements Runnable {
             String cmd = parts[0];
 
             switch (cmd) {
+                case "REGISTER":
+                    if (username != null) {
+                        sendMessage("Ya estás registrado como " + username + ".");
+                        break;
+                    }
+                    if (parts.length < 2) {
+                        sendMessage("Uso: REGISTER <nombreUsuario>");
+                        break;
+                    }
+
+                    String newUsername = parts[1];
+
+                    if (newUsername.isBlank()) {
+                        sendMessage("Nombre inválido. Desconectando...");
+                        break;
+                    }
+
+                    if (Server.clients.containsKey(newUsername)) {
+                        sendMessage("Usuario '" + newUsername + "' ya en uso, elige otro.");
+                        break;
+                    }
+
+                    if(clientIp.equals("127.0.0.1")) {
+                        out.println("Estás iniciando un cliente en localhost, ingresa la ip del cliente: \n");
+                        String customIp = in.readLine();
+
+                        if (customIp == null || customIp.isBlank()) {
+                            sendMessage("No se proporcionó IP, usando 127.0.0.1.");
+                        } else {
+                            this.clientIp = customIp.trim();
+                        }
+                    }
+
+                    this.username = newUsername;
+                    Server.clients.put(username, this);
+                    break;
                 case "MSG_USER":
                     if (parts.length < 3) {
                         sendMessage("Uso: MSG_USER <usuario> <mensaje>");
