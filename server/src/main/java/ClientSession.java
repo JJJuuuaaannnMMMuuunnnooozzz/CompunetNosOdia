@@ -1,3 +1,7 @@
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import dtos.Request;
+
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -6,9 +10,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ClientSession implements Runnable {
     private Socket socket;
     private BufferedReader in;
-    private PrintWriter out;
+    private BufferedWriter out;
     private String username;
     private String clientIp;
+    private Gson gson;
+    private boolean running;
 
     public ClientSession(Socket socket) throws IOException {
         InetSocketAddress remote = (InetSocketAddress) socket.getRemoteSocketAddress();
@@ -17,7 +23,16 @@ public class ClientSession implements Runnable {
     }
 
     public void sendMessage(String msg) {
-        out.println(msg);
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", msg);
+        String jsonResponse = gson.toJson(response);
+        try {
+            out.write(jsonResponse + "\n");
+            out.flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     public String getClientIp() {
@@ -27,7 +42,12 @@ public class ClientSession implements Runnable {
     public void run() {
         try {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            out = new PrintWriter(socket.getOutputStream(), true);
+            out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+            gson = new Gson();
+            running = true;
+
+
+            /*
 
             out.println("Ingresa tu nombre de usuario:");
             username = in.readLine();
@@ -53,11 +73,12 @@ public class ClientSession implements Runnable {
             Server.clients.put(username, this);
             out.println("Bienvenido " + username + "!");
 
+             */
 
 
             String line;
             while ((line = in.readLine()) != null) {
-                processCommand(line.trim());
+                processCommand(line); // procesar cada mensaje sin cerrar la conexión
             }
 
         } catch (IOException e) {
@@ -73,65 +94,38 @@ public class ClientSession implements Runnable {
         }
     }
 
-    private void processCommand(String line) {
+    private void processCommand(String command) {
         try {
-            String[] parts = line.split(" ", 3);
-            String cmd = parts[0];
+            String response = "";
+            Request rq = gson.fromJson(command, Request.class);
 
-            switch (cmd) {
+            switch (rq.getCommand()) {
                 case "REGISTER":
-                    if (username != null) {
-                        sendMessage("Ya estás registrado como " + username + ".");
-                        break;
-                    }
-                    if (parts.length < 2) {
-                        sendMessage("Uso: REGISTER <nombreUsuario>");
-                        break;
-                    }
+                        username = rq.getData().get("username").toString();
+                        clientIp = rq.getData().get("clientIp").toString();
+                        Server.clients.put(username, this);
 
-                    String newUsername = parts[1];
+                        response = "OK";
 
-                    if (newUsername.isBlank()) {
-                        sendMessage("Nombre inválido. Desconectando...");
-                        break;
-                    }
-
-                    if (Server.clients.containsKey(newUsername)) {
-                        sendMessage("Usuario '" + newUsername + "' ya en uso, elige otro.");
-                        break;
-                    }
-
-                    if(clientIp.equals("127.0.0.1")) {
-                        out.println("Estás iniciando un cliente en localhost, ingresa la ip del cliente: \n");
-                        String customIp = in.readLine();
-
-                        if (customIp == null || customIp.isBlank()) {
-                            sendMessage("No se proporcionó IP, usando 127.0.0.1.");
-                        } else {
-                            this.clientIp = customIp.trim();
-                        }
-                    }
-
-                    this.username = newUsername;
-                    Server.clients.put(username, this);
                     break;
                 case "MSG_USER":
-                    if (parts.length < 3) {
-                        sendMessage("Uso: MSG_USER <usuario> <mensaje>");
-                        break;
-                    }
-                    String user = parts[1];
-                    String msgU = "[" + username + " -> " + user + "]: " + parts[2];
+
+                    String user = rq.getData().get("receiver").toString();
+
+                    String msgU = rq.getData().get("message").toString();
                     Server.history.add(msgU);
 
                     if (Server.clients.containsKey(user)) {
-                        Server.clients.get(user).sendMessage(msgU);
+                        //de momento solo voy a enviar el message de la rq
+                        String ms = rq.getData().get("message").toString();
+                        Server.clients.get(user).sendMessage(ms);
                         PersistenceManager.saveMessage(username, user, "text", msgU);
-                        sendMessage("Mensaje enviado a " + user);
+
                     } else {
-                        sendMessage("Usuario '" + user + "' no encontrado.");
+                        response = "ERROR";
                     }
                     break;
+                /*
 
                 case "CREATE_GROUP":
                     if (parts.length < 2) {
@@ -404,9 +398,13 @@ public class ClientSession implements Runnable {
                     }
                     break;
 
+                 */
+
                 default:
                     sendMessage("Comando no reconocido.");
             }
+
+            sendMessage(response);
 
         } catch (Exception e) {
             sendMessage("Error al procesar comando: " + e.getMessage());

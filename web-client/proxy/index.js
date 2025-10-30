@@ -8,12 +8,12 @@ let connected = false;
 
 socket.connect(9090, "127.0.0.1", () =>{
   connected = true;
+  console.log(connected)
 })
 
 
 const app = express();
 app.use(cors());
-const port = 3000
 app.use(express.json());
 
 app.post('/chat',(req,res) =>{
@@ -23,12 +23,12 @@ app.post('/chat',(req,res) =>{
         data: body
     }
     const bodyStr = JSON.stringify(backReq)
+
     if(connected){
         socket.write(bodyStr)
         socket.write("\n")
         socket.once("data", (data) => {
             const message = data.toString().trim();
-            console.log("Respuesta del servidor:", message);
             try{
                 res.json(JSON.parse(message));
             }catch(e){
@@ -42,28 +42,31 @@ app.post('/chat',(req,res) =>{
 
 });
 
-app.post('/register', (req, res) => {
-    const { username } = req.body;
+app.post('/register', async (req, res) => {
+    const { username, clientIp } = req.body;
 
-    if (!username) {
-        return res.status(400).json({ error: "Falta el campo 'username' en el cuerpo de la solicitud." });
-    }
+    const raw = {
+        command: "REGISTER",
+        data: {
+            username: username,
+            clientIp: clientIp
+        }
+    };
+    const request = JSON.stringify(raw);
 
-    const command = `REGISTER ${username}`;
+
 
     if (connected) {
 
-        socket.write(command);
+        socket.write(request);
         socket.write("\n");
-
         socket.once("data", (data) => {
             const message = data.toString().trim();
-            console.log(`Respuesta del servidor para registro de ${username}:`, message);
 
-            if (message.includes("Bienvenido") || !message.includes("uso")) {
-                res.json({ success: true, message: message });
+            if (message.includes("OK")) {
+                res.json( message );
             } else {
-                res.status(409).json({ success: false, error: message });
+                res.status(409).json(message );
             }
         });
 
@@ -77,6 +80,8 @@ app.post('/register', (req, res) => {
     }
 });
 
+
+
 app.post('/group/create', (req, res) =>{
     const { groupName } = req.body
 
@@ -89,7 +94,7 @@ app.post('/group/create', (req, res) =>{
         socket.write(command)
         socket.write("\n")
 
-        socket.once("data", (data) =>{
+        socket.once("message", (data) =>{
             const message = data.toString().trim();
             console.log("Respuesta del servidor (CREATE_GROUP):", message);
 
@@ -121,7 +126,7 @@ app.post('/group/add', (req, res) => {
         socket.write(command);
         socket.write("\n");
 
-        socket.once("data", (data) => {
+        socket.once("message", (data) => {
             const message = data.toString().trim();
             console.log("Respuesta del servidor (ADD_TO_GROUP):", message);
 
@@ -141,6 +146,12 @@ app.post('/group/add', (req, res) => {
         res.status(503).json({ error: "Socket no conectado al servidor Java." });
     }
 });
+
+const PORT = 3001;
+app.listen(PORT, () => {
+    console.log(`Proxy escuchando en http://localhost:${PORT}`);
+});
+
 
 
 
