@@ -14,7 +14,8 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "serve": "^14.2.5",
-    "webpack": "^5.102.1"
+    "webpack": "^5.102.1",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "webpack-cli": "^6.0.1"

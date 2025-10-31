@@ -14,7 +14,7 @@ public class ClientSession implements Runnable {
     private String username;
     private String clientIp;
     private Gson gson;
-    private boolean running;
+
 
     public ClientSession(Socket socket) throws IOException {
         InetSocketAddress remote = (InetSocketAddress) socket.getRemoteSocketAddress();
@@ -23,11 +23,9 @@ public class ClientSession implements Runnable {
     }
 
     public void sendMessage(String msg) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", msg);
-        String jsonResponse = gson.toJson(response);
+        System.out.println("Sending message: " + msg);
         try {
-            out.write(jsonResponse + "\n");
+            out.write(msg + "\n");
             out.flush();
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -44,7 +42,7 @@ public class ClientSession implements Runnable {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             gson = new Gson();
-            running = true;
+
 
 
             /*
@@ -111,13 +109,13 @@ public class ClientSession implements Runnable {
                 case "MSG_USER":
 
                     String user = rq.getData().get("receiver").toString();
-
                     String msgU = rq.getData().get("message").toString();
                     Server.history.add(msgU);
 
                     if (Server.clients.containsKey(user)) {
                         //de momento solo voy a enviar el message de la rq
-                        String ms = rq.getData().get("message").toString();
+                        rq.setCommand("GET_MESSAGE");
+                        String ms = gson.toJson(rq);
                         Server.clients.get(user).sendMessage(ms);
                         PersistenceManager.saveMessage(username, user, "text", msgU);
 
@@ -125,6 +123,7 @@ public class ClientSession implements Runnable {
                         response = "ERROR";
                     }
                     break;
+
                 /*
 
                 case "CREATE_GROUP":

@@ -1,7 +1,26 @@
 const express = require('express')
 const net = require('net')
 const cors = require('cors')
+const WebSocket = require('ws')
 
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+
+const WSPORT = 3002;
+const wss = new WebSocket.Server({ port: WSPORT });
+
+wss.on('connection', (ws) =>{
+    console.log("Cliente web iniciado")
+
+    ws.on('close', () =>{
+        console.log("Cliente web cerrado");
+
+    });
+
+});
 
 const socket = new net.Socket();
 let connected = false;
@@ -9,18 +28,53 @@ let connected = false;
 socket.connect(9090, "127.0.0.1", () =>{
   connected = true;
   console.log(connected)
-})
+
+    socket.on("data", (data) => {
+        const messageStr = data.toString().trim();
+        console.log(messageStr)
+        try {
+            const message = JSON.parse(messageStr);
 
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+            switch(message.command){
+                case "GET_MESSAGE":
+                    console.log("si llego el mensaje")
+                    if (message.command === "GET_MESSAGE") {
+                        console.log(`[ASYNC] Mensaje recibido y reenviado: ${messageStr}`);
+
+                        wss.clients.forEach((client) => {
+                            if (client.readyState === WebSocket.OPEN) {
+                                client.send(messageStr); // Envía la cadena JSON completa
+                            }
+                        });
+                    }
+                    break;
+
+                case "GET_VOICE_CALL":
+                    break;
+
+            }
+
+        }catch (e){
+
+        }
+
+
+    })
+});
+
+
+
 
 app.post('/chat',(req,res) =>{
-    const body = req.body
+    const { sender, receiver, message } = req.body;
     const backReq = {
         command: "MSG_USER",
-        data: body
+        data: {
+            "sender" : sender,
+            "receiver" : receiver,
+            "message" : message,
+        }
     }
     const bodyStr = JSON.stringify(backReq)
 
