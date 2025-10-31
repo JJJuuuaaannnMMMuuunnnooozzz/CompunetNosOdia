@@ -119,51 +119,53 @@ public class ClientSession implements Runnable {
                         Server.clients.get(user).sendMessage(ms);
                         PersistenceManager.saveMessage(username, user, "text", msgU);
 
+                        response = "OK";
+
                     } else {
                         response = "ERROR";
                     }
                     break;
-
-                /*
-
                 case "CREATE_GROUP":
-                    if (parts.length < 2) {
-                        sendMessage("Uso: CREATE_GROUP <nombreGrupo>");
-                        break;
-                    }
-                    String group = parts[1];
+
+                    String group = rq.getData().get("group").toString();
                     if (Server.groups.containsKey(group)) {
-                        sendMessage("El grupo '" + group + "' ya existe.");
+                        response = "ERROR";
                     } else {
                         Server.groups.put(group, ConcurrentHashMap.newKeySet());
                         Server.groups.get(group).add(username);
                         PersistenceManager.saveGroups(Server.groups);
-                        sendMessage("Grupo '" + group + "' creado y te uniste.");
+                        response = "OK";
                     }
                     break;
 
                 case "ADD_TO_GROUP":
-                    if (parts.length < 3) {
-                        sendMessage("Uso: ADD_TO_GROUP <grupo> <usuario>");
-                        break;
-                    }
-                    String g = parts[1];
-                    String targetUser = parts[2];
 
-                    if (!Server.groups.containsKey(g)) {
-                        sendMessage("El grupo '" + g + "' no existe.");
-                        break;
-                    }
-                    if (!Server.clients.containsKey(targetUser)) {
-                        sendMessage("El usuario '" + targetUser + "' no está conectado.");
-                        break;
-                    }
+                    List<String> users = gson.fromJson(rq.getData().get("members").toString(), List.class);
+                    String groupName = rq.getData().get("group").toString();
 
-                    Server.groups.get(g).add(targetUser);
-                    PersistenceManager.saveGroups(Server.groups);
-                    sendMessage("Usuario '" + targetUser + "' agregado al grupo '" + g + "'.");
-                    Server.clients.get(targetUser).sendMessage("Has sido agregado al grupo '" + g + "'.");
+                    for (String u : users) {
+                        Server.groups.get(groupName).add(u);
+                        Server.clients.get(u).sendMessage("OK");
+                    }
+                    response = "OK";
                     break;
+
+                case "MSG_GROUP":
+
+                    String gName = rq.getData().get("group").toString();
+                    break;
+
+
+
+
+
+
+
+                /*
+
+
+
+
 
                 case "MSG_GROUP":
                     if (parts.length < 3) {

@@ -208,5 +208,31 @@
     "to": "\"johan\"",
     "type": "text",
     "content": "\"ejjejej\""
+  },
+  {
+    "timestamp": "1761920060306",
+    "to": "\"sebas\"",
+    "type": "text",
+    "content": "\"hola\""
+  },
+  {
+    "timestamp": "1761920074981",
+    "to": "\"sebas\"",
+    "type": "text",
+    "content": "\"hola\""
+  },
+  {
+    "timestamp": "1761920129563",
+    "from": "\"sebas\"",
+    "to": "\"johan\"",
+    "type": "text",
+    "content": "\"Bebesita uah\""
+  },
+  {
+    "timestamp": "1761920193593",
+    "from": "\"johan\"",
+    "to": "\"sebas\"",
+    "type": "text",
+    "content": "\"pn\""
   }
 ]
