@@ -45,38 +45,9 @@ public class ClientSession implements Runnable {
 
 
 
-            /*
-
-            out.println("Ingresa tu nombre de usuario:");
-            username = in.readLine();
-
-            if (username == null || username.isBlank()) {
-                out.println("Nombre inválido. Desconectando...");
-                socket.close();
-                return;
-            }
-
-            if (Server.clients.containsKey(username)) {
-                out.println("Usuario ya en uso, desconectando...");
-                socket.close();
-                return;
-            }
-
-            if(clientIp.equals("127.0.0.1")) {
-                out.println("Estas iniciando un cliente en localhost, ingrese la ip del cliente: \n");
-                this.clientIp = in.readLine();
-            }
-
-
-            Server.clients.put(username, this);
-            out.println("Bienvenido " + username + "!");
-
-             */
-
-
             String line;
             while ((line = in.readLine()) != null) {
-                processCommand(line); // procesar cada mensaje sin cerrar la conexión
+                processCommand(line);
             }
 
         } catch (IOException e) {
@@ -113,7 +84,6 @@ public class ClientSession implements Runnable {
                     Server.history.add(msgU);
 
                     if (Server.clients.containsKey(user)) {
-                        //de momento solo voy a enviar el message de la rq
                         rq.setCommand("GET_MESSAGE");
                         String ms = gson.toJson(rq);
                         Server.clients.get(user).sendMessage(ms);
@@ -128,7 +98,9 @@ public class ClientSession implements Runnable {
                 case "CREATE_GROUP":
 
                     String group = rq.getData().get("group").toString();
+                    System.out.println("Creating group: " + group);
                     if (Server.groups.containsKey(group)) {
+                        System.out.println("Group " + group + " already exists");
                         response = "ERROR";
                     } else {
                         Server.groups.put(group, ConcurrentHashMap.newKeySet());
@@ -141,11 +113,13 @@ public class ClientSession implements Runnable {
                 case "ADD_TO_GROUP":
 
                     List<String> users = gson.fromJson(rq.getData().get("members").toString(), List.class);
+                    System.out.println("Adding members: " + users);
                     String groupName = rq.getData().get("group").toString();
+                    System.out.println("Adding group: " + groupName);
 
                     for (String u : users) {
                         Server.groups.get(groupName).add(u);
-                        Server.clients.get(u).sendMessage("OK");
+                        //Server.clients.get(u).sendMessage("OK");
                     }
                     response = "OK";
                     break;
@@ -153,6 +127,20 @@ public class ClientSession implements Runnable {
                 case "MSG_GROUP":
 
                     String gName = rq.getData().get("group").toString();
+                    List<String> receivers = Server.groups.get(gName).stream().toList();
+
+
+                    String cmd = "GET_MSG_GROUP";
+                    rq.setCommand(cmd);
+                    String msg = gson.toJson(rq);
+
+
+
+                    for (String r : receivers) {
+                        Server.clients.get(r).sendMessage(msg);
+                    }
+                    response = "OK";
+
                     break;
 
 
@@ -166,28 +154,6 @@ public class ClientSession implements Runnable {
 
 
 
-
-                case "MSG_GROUP":
-                    if (parts.length < 3) {
-                        sendMessage("Uso: MSG_GROUP <grupo> <mensaje>");
-                        break;
-                    }
-                    String gName = parts[1];
-                    String msgG = "[" + username + " @ " + gName + "]: " + parts[2];
-                    Server.history.add(msgG);
-
-                    if (Server.groups.containsKey(gName)) {
-                        for (String member : Server.groups.get(gName)) {
-                            if (Server.clients.containsKey(member) && !member.equals(username)) {
-                                Server.clients.get(member).sendMessage(msgG);
-                            }
-                        }
-                        PersistenceManager.saveMessage(username, gName, "text", msgG);
-                        sendMessage("Mensaje enviado al grupo '" + gName + "'.");
-                    } else {
-                        sendMessage("Grupo '" + gName + "' no existe.");
-                    }
-                    break;
 
                 case "VOICE_USER":
                     if (parts.length < 3) {

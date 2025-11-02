@@ -234,5 +234,19 @@
     "to": "\"sebas\"",
     "type": "text",
     "content": "\"pn\""
+  },
+  {
+    "timestamp": "1762107216677",
+    "from": "\"user2\"",
+    "to": "\"user2\"",
+    "type": "text",
+    "content": "\"lola\""
+  },
+  {
+    "timestamp": "1762109791144",
+    "from": "\"user2\"",
+    "to": "\"user2\"",
+    "type": "text",
+    "content": "\"we\""
   }
 ]

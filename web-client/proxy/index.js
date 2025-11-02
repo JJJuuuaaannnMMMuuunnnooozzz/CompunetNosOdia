@@ -31,26 +31,28 @@ socket.connect(9090, "127.0.0.1", () =>{
 
     socket.on("data", (data) => {
         const messageStr = data.toString().trim();
-        console.log(messageStr)
         try {
             const message = JSON.parse(messageStr);
 
 
             switch(message.command){
                 case "GET_MESSAGE":
-                    console.log("si llego el mensaje")
-                    if (message.command === "GET_MESSAGE") {
-                        console.log(`[ASYNC] Mensaje recibido y reenviado: ${messageStr}`);
 
                         wss.clients.forEach((client) => {
                             if (client.readyState === WebSocket.OPEN) {
-                                client.send(messageStr); // Envía la cadena JSON completa
+                                client.send(messageStr);
                             }
                         });
-                    }
+
                     break;
 
-                case "GET_VOICE_CALL":
+                case "GET_MSG_GROUP":
+
+                    wss.clients.forEach((client) => {
+                        if (client.readyState === WebSocket.OPEN) {
+                            client.send(messageStr);
+                        }
+                    });
                     break;
 
             }
@@ -139,56 +141,56 @@ app.post('/register', async (req, res) => {
 app.post('/group/create', (req, res) =>{
     const { groupName } = req.body
 
-    if(!groupName){
-        return res.status(400).json( {error: "No esta el nombre del grupo"})
-    }
-
-    const command = 'CREATE_GROUP' + {groupName}
-    if(connected){
-        socket.write(command)
-        socket.write("\n")
-
-        socket.once("message", (data) =>{
-            const message = data.toString().trim();
-            console.log("Respuesta del servidor (CREATE_GROUP):", message);
-
-            if (message.includes("creado") && message.includes(groupName) || !message.includes("existe")) {
-                res.json({ success: true, message: message });
-            } else {
-                res.status(409).json({ success: false, error: message });
-            }
-        })
-
-
-
-    }else{
-        res.status(500).json({ error: "Socket no conectado" });
-    }
-})
-
-app.post('/group/add', (req, res) => {
-
-    const { groupName, targetUser } = req.body;
-
-    if (!groupName || !targetUser) {
-        return res.status(400).json({ error: "Faltan los campos 'groupName' o 'targetUser'." });
-    }
-
-    const command = `ADD_TO_GROUP ${groupName} ${targetUser}`;
+    const raw = {
+        command: "CREATE_GROUP",
+        data: {
+            group: groupName,
+        }
+    };
+    const request = JSON.stringify(raw);
 
     if (connected) {
-        socket.write(command);
+
+        socket.write(request);
+        socket.write("\n");
+        socket.once("data", (data) => {
+            const message = data.toString().trim();
+
+            if (message.includes("OK")) {
+                res.json( message );
+            } else {
+                res.status(409).json(message );
+            }
+        });
+
+        socket.once('error', (err) => {
+            console.error('Error de socket durante el registro:', err);
+            res.status(500).json({ error: "Error de conexión con el servidor de chat." });
+        });
+
+    } else {
+        res.status(503).json({ error: "Socket no conectado al servidor Java." });
+    }
+});
+
+
+app.post('/group/add', (req, res) => {
+    const { groupName, members } = req.body;
+
+    const payload = {
+        command: "ADD_TO_GROUP",
+        data: {
+            group : groupName,
+            members: members
+        }
+    };
+
+    if (connected) {
+        socket.write(JSON.stringify(payload));
         socket.write("\n");
 
         socket.once("message", (data) => {
-            const message = data.toString().trim();
-            console.log("Respuesta del servidor (ADD_TO_GROUP):", message);
-
-            if (message.includes("agregado") && message.includes(targetUser) || !message.includes("no existe")) {
-                res.json({ success: true, message: message });
-            } else {
-                res.status(404).json({ success: false, error: message });
-            }
+            res.json({ success: true, response: data.toString() });
         });
 
         socket.once('error', (err) => {
@@ -200,6 +202,39 @@ app.post('/group/add', (req, res) => {
         res.status(503).json({ error: "Socket no conectado al servidor Java." });
     }
 });
+
+
+
+app.post('/group/message', (req, res) => {
+    const { groupName, sender, message } = req.body;
+
+    const payload = {
+        command: "MSG_GROUP",
+        data: {
+            group: groupName,
+            sender: sender,
+            message: message,
+        }
+    };
+
+    if (connected) {
+        socket.write(JSON.stringify(payload));
+        socket.write("\n");
+
+        socket.once("message", (data) => {
+            res.json({ success: true, response: data.toString() });
+        });
+
+        socket.once('error', (err) => {
+            console.error('Error de socket durante MSG_GROUP:', err);
+            res.status(500).json({ error: "Error de conexión con el servidor de chat." });
+        });
+
+    } else {
+        res.status(503).json({ error: "Socket no conectado al servidor Java." });
+    }
+});
+
 
 const PORT = 3001;
 app.listen(PORT, () => {
