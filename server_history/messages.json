@@ -4,7 +4,7 @@
     "from": "juan",
     "to": "juan2",
     "type": "text",
-    "content": "[juan -\u003e juan2]: Hola,"
+    "content": "[juan -> juan2]: Hola,"
   },
   {
     "timestamp": "1760048632385",
@@ -18,14 +18,14 @@
     "from": "juan",
     "to": "juan2",
     "type": "text",
-    "content": "[juan -\u003e juan2]: dsdsdsfsf"
+    "content": "[juan -> juan2]: dsdsdsfsf"
   },
   {
     "timestamp": "1760048673150",
     "from": "juan",
     "to": "juan2",
     "type": "text",
-    "content": "[juan -\u003e juan2]: hola"
+    "content": "[juan -> juan2]: hola"
   },
   {
     "timestamp": "1760048695651",
@@ -339,5 +339,47 @@
     "to": "\"h\"",
     "type": "text",
     "content": "\"hola h\""
+  },
+  {
+    "timestamp": "1762197142842",
+    "from": "\"User1\"",
+    "to": "\"User1\"",
+    "type": "text",
+    "content": "\"Hola\""
+  },
+  {
+    "timestamp": "1762220396188",
+    "from": "\"El pepe\"",
+    "to": "\"El pepe\"",
+    "type": "text",
+    "content": "\"Ete sesh\""
+  },
+  {
+    "timestamp": "1762225688559",
+    "from": "McQueen",
+    "to": "McQueen",
+    "type": "text",
+    "content": "Eo"
+  },
+  {
+    "timestamp": "1762228437120",
+    "from": "El eo",
+    "to": "Tilin",
+    "type": "text",
+    "content": "Eo"
+  },
+  {
+    "timestamp": "1762228444668",
+    "from": "El eo",
+    "to": "Tilin",
+    "type": "text",
+    "content": "Eo eo"
+  },
+  {
+    "timestamp": "1762228462627",
+    "from": "El eo",
+    "to": "Tilin",
+    "type": "text",
+    "content": "Eo eo"
   }
 ]

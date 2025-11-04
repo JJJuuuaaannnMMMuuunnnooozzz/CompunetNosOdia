@@ -14,7 +14,7 @@ public class PersistenceManager {
     private static final String GROUP_FILE = BASE_DIR + "/groups.json";
     private static final String AUDIO_DIR = BASE_DIR + "/audio";
 
-    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
     public static void init() throws IOException {
         Files.createDirectories(Paths.get(BASE_DIR));
@@ -42,7 +42,7 @@ public class PersistenceManager {
             messages.add(entry);
             String json = gson.toJson(messages);
             Files.write(Paths.get(MSG_FILE), json.getBytes(StandardCharsets.UTF_8),
-                        StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+                    StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -51,7 +51,8 @@ public class PersistenceManager {
     public static List<Map<String, String>> loadMessages() {
         try {
             String json = Files.readString(Paths.get(MSG_FILE), StandardCharsets.UTF_8);
-            Type listType = new TypeToken<List<Map<String, String>>>() {}.getType();
+            Type listType = new TypeToken<List<Map<String, String>>>() {
+            }.getType();
             List<Map<String, String>> msgs = gson.fromJson(json, listType);
             return msgs != null ? msgs : new ArrayList<>();
         } catch (IOException e) {
@@ -65,11 +66,11 @@ public class PersistenceManager {
             // Convertir a Map<String, List<String>> para serializar JSON de forma estable
             Map<String, List<String>> out = new LinkedHashMap<>();
             for (Map.Entry<String, Set<String>> e : groups.entrySet()) {
-                out.put(e.getKey(), new ArrayList<>(e.getValue()));
+                out.put(e.getKey().trim(), new ArrayList<>(e.getValue()));
             }
             String json = gson.toJson(out);
             Files.write(Paths.get(GROUP_FILE), json.getBytes(StandardCharsets.UTF_8),
-                        StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+                    StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -78,14 +79,20 @@ public class PersistenceManager {
     public static Map<String, Set<String>> loadGroups() {
         try {
             String json = Files.readString(Paths.get(GROUP_FILE), StandardCharsets.UTF_8);
-            Type tmpType = new TypeToken<Map<String, List<String>>>() {}.getType();
+            Type tmpType = new TypeToken<Map<String, List<String>>>() {
+            }.getType();
             Map<String, List<String>> tmp = gson.fromJson(json, tmpType);
             Map<String, Set<String>> result = new LinkedHashMap<>();
             if (tmp != null) {
                 for (Map.Entry<String, List<String>> e : tmp.entrySet()) {
-                    result.put(e.getKey(), new LinkedHashSet<>(e.getValue()));
+                    Set<String> members = new LinkedHashSet<>();
+                    for (String member : e.getValue()) {
+                        members.add(member.trim());
+                    }
+                    result.put(e.getKey().trim(), members);
                 }
             }
+
             return result;
         } catch (IOException e) {
             return new LinkedHashMap<>();
