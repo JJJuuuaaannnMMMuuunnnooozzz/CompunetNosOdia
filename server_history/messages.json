@@ -4,7 +4,7 @@
     "from": "juan",
     "to": "juan2",
     "type": "text",
-    "content": "[juan -\u003e juan2]: Hola,"
+    "content": "[juan -> juan2]: Hola,"
   },
   {
     "timestamp": "1760048632385",
@@ -18,14 +18,14 @@
     "from": "juan",
     "to": "juan2",
     "type": "text",
-    "content": "[juan -\u003e juan2]: dsdsdsfsf"
+    "content": "[juan -> juan2]: dsdsdsfsf"
   },
   {
     "timestamp": "1760048673150",
     "from": "juan",
     "to": "juan2",
     "type": "text",
-    "content": "[juan -\u003e juan2]: hola"
+    "content": "[juan -> juan2]: hola"
   },
   {
     "timestamp": "1760048695651",
@@ -42,10 +42,346 @@
     "content": "server_history\\audio\\voice_s_to_j_1760059611463.wav"
   },
   {
-    "timestamp": "1760066695294",
-    "from": "juan",
-    "to": "juan2",
-    "type": "voice",
-    "content": "server_history\\audio\\voice_juan_to_juan2_1760066695229.wav"
+
+    "timestamp": "1761882797115",
+    "from": "\"pedro\"",
+    "to": "\"johan\"",
+    "type": "text",
+    "content": "\"hola\""
+  },
+  {
+    "timestamp": "1761882829979",
+    "from": "\"pedro\"",
+    "to": "\"johan\"",
+    "type": "text",
+    "content": "\"adios\""
+  },
+  {
+    "timestamp": "1761882989423",
+    "from": "\"johan\"",
+    "to": "\"pedro\"",
+    "type": "text",
+    "content": "\"xd\""
+  },
+  {
+    "timestamp": "1761883020702",
+    "from": "\"pedro\"",
+    "to": "\"johan\"",
+    "type": "text",
+    "content": "\"xd\""
+  },
+  {
+    "timestamp": "1761883796094",
+    "from": "\"johan\"",
+    "to": "\"pedro\"",
+    "type": "text",
+    "content": "\"vfvf\""
+  },
+  {
+    "timestamp": "1761884236406",
+    "from": "\"johan\"",
+    "to": "\"pedro\"",
+    "type": "text",
+    "content": "\"vfvf\""
+  },
+  {
+    "timestamp": "1761884243612",
+    "from": "\"johan\"",
+    "to": "\"pedro\"",
+    "type": "text",
+    "content": "\"vfvf\""
+  },
+  {
+    "timestamp": "1761884547569",
+    "from": "\"pedro\"",
+    "to": "\"pedro\"",
+    "type": "text",
+    "content": "\"vfvf\""
+  },
+  {
+    "timestamp": "1761884704804",
+    "from": "\"johan\"",
+    "to": "\"pedro\"",
+    "type": "text",
+    "content": "\"vfvf\""
+  },
+  {
+    "timestamp": "1761884948547",
+    "from": "\"johan\"",
+    "to": "\"pedro\"",
+    "type": "text",
+    "content": "\"vfvf\""
+  },
+  {
+    "timestamp": "1761914496937",
+    "from": "\"pedro\"",
+    "to": "\"pedro\"",
+    "type": "text",
+    "content": "\"vfvf\""
+  },
+  {
+    "timestamp": "1761914947442",
+    "from": "\"johan\"",
+    "to": "\"pedro\"",
+    "type": "text",
+    "content": "\"vfvf\""
+  },
+  {
+    "timestamp": "1761914978000",
+    "from": "\"johan\"",
+    "to": "\"pedro\"",
+    "type": "text",
+    "content": "\"vfvf\""
+  },
+  {
+    "timestamp": "1761915008481",
+    "from": "\"johan\"",
+    "to": "\"pedro\"",
+    "type": "text",
+    "content": "\"vfvf\""
+  },
+  {
+    "timestamp": "1761915044093",
+    "from": "\"johan\"",
+    "to": "\"pedro\"",
+    "type": "text",
+    "content": "\"vfvf\""
+  },
+  {
+    "timestamp": "1761915215644",
+    "from": "\"pedro\"",
+    "to": "\"pedro\"",
+    "type": "text",
+    "content": "\"vfvf\""
+  },
+  {
+    "timestamp": "1761915233757",
+    "from": "\"pedro\"",
+    "to": "\"pedro\"",
+    "type": "text",
+    "content": "\"vfvf\""
+  },
+  {
+    "timestamp": "1761915286195",
+    "from": "\"johan\"",
+    "to": "\"pedro\"",
+    "type": "text",
+    "content": "\"vfvf\""
+  },
+  {
+    "timestamp": "1761915356107",
+    "from": "\"pedro\"",
+    "to": "\"pedro\"",
+    "type": "text",
+    "content": "\"vfvf\""
+  },
+  {
+    "timestamp": "1761916007076",
+    "from": "\"johan\"",
+    "to": "\"pedro\"",
+    "type": "text",
+    "content": "\"vfvf\""
+  },
+  {
+    "timestamp": "1761916191911",
+    "from": "\"pedro\"",
+    "to": "\"pedro\"",
+    "type": "text",
+    "content": "\"vfvf\""
+  },
+  {
+    "timestamp": "1761916263393",
+    "from": "\"johan\"",
+    "to": "\"pedro\"",
+    "type": "text",
+    "content": "\"vfvf\""
+  },
+  {
+    "timestamp": "1761916571453",
+    "from": "\"pedro\"",
+    "to": "\"pedro\"",
+    "type": "text",
+    "content": "\"vfvf\""
+  },
+  {
+    "timestamp": "1761916625563",
+    "from": "\"pedro\"",
+    "to": "\"johan\"",
+    "type": "text",
+    "content": "\"ejjejej\""
+  },
+  {
+    "timestamp": "1761920060306",
+    "to": "\"sebas\"",
+    "type": "text",
+    "content": "\"hola\""
+  },
+  {
+    "timestamp": "1761920074981",
+    "to": "\"sebas\"",
+    "type": "text",
+    "content": "\"hola\""
+  },
+  {
+    "timestamp": "1761920129563",
+    "from": "\"sebas\"",
+    "to": "\"johan\"",
+    "type": "text",
+    "content": "\"Bebesita uah\""
+  },
+  {
+    "timestamp": "1761920193593",
+    "from": "\"johan\"",
+    "to": "\"sebas\"",
+    "type": "text",
+    "content": "\"pn\""
+  },
+  {
+    "timestamp": "1762107216677",
+    "from": "\"user2\"",
+    "to": "\"user2\"",
+    "type": "text",
+    "content": "\"lola\""
+  },
+  {
+    "timestamp": "1762109791144",
+    "from": "\"user2\"",
+    "to": "\"user2\"",
+    "type": "text",
+    "content": "\"we\""
+  },
+  {
+    "timestamp": "1762153116853",
+    "from": "\"Sebas\"",
+    "to": "\"Sebas\"",
+    "type": "text",
+    "content": "\"Bebesita uah\""
+  },
+  {
+    "timestamp": "1762153188652",
+    "from": "\"a\"",
+    "to": "\"a\"",
+    "type": "text",
+    "content": "\"a\""
+  },
+  {
+    "timestamp": "1762153331641",
+    "from": "\"user1\"",
+    "to": "\"user1\"",
+    "type": "text",
+    "content": "\"a\""
+  },
+  {
+    "timestamp": "1762153925101",
+    "from": "\"s\"",
+    "to": "\"s\"",
+    "type": "text",
+    "content": "\"aaaaa\""
+  },
+  {
+    "timestamp": "1762153996909",
+    "from": "\"ss\"",
+    "to": "\"ss\"",
+    "type": "text",
+    "content": "\"aaaa\""
+  },
+  {
+    "timestamp": "1762155335118",
+    "from": "\"bb\"",
+    "to": "\"bb\"",
+    "type": "text",
+    "content": "\"aaaaaaaaaaaaaaaaa\""
+  },
+  {
+    "timestamp": "1762155434625",
+    "from": "\"bbbbb\"",
+    "to": "\"bbbbb\"",
+    "type": "text",
+    "content": "\"hola\""
+  },
+  {
+    "timestamp": "1762155454861",
+    "from": "\"c\"",
+    "to": "\"c\"",
+    "type": "text",
+    "content": "\"hola c\""
+  },
+  {
+    "timestamp": "1762155857812",
+    "from": "\"dd\"",
+    "to": "\"dd\"",
+    "type": "text",
+    "content": "\"hola dd\""
+  },
+  {
+    "timestamp": "1762156197220",
+    "from": "\"eee\"",
+    "to": "\"eee\"",
+    "type": "text",
+    "content": "\"eeeee\""
+  },
+  {
+    "timestamp": "1762156349722",
+    "from": "\"ff\"",
+    "to": "\"ff\"",
+    "type": "text",
+    "content": "\"ffff\""
+  },
+  {
+    "timestamp": "1762156415484",
+    "from": "\"g\"",
+    "to": "\"g\"",
+    "type": "text",
+    "content": "\"ggg\""
+  },
+  {
+    "timestamp": "1762157265394",
+    "from": "\"h\"",
+    "to": "\"h\"",
+    "type": "text",
+    "content": "\"hola h\""
+  },
+  {
+    "timestamp": "1762197142842",
+    "from": "\"User1\"",
+    "to": "\"User1\"",
+    "type": "text",
+    "content": "\"Hola\""
+  },
+  {
+    "timestamp": "1762220396188",
+    "from": "\"El pepe\"",
+    "to": "\"El pepe\"",
+    "type": "text",
+    "content": "\"Ete sesh\""
+  },
+  {
+    "timestamp": "1762225688559",
+    "from": "McQueen",
+    "to": "McQueen",
+    "type": "text",
+    "content": "Eo"
+  },
+  {
+    "timestamp": "1762228437120",
+    "from": "El eo",
+    "to": "Tilin",
+    "type": "text",
+    "content": "Eo"
+  },
+  {
+    "timestamp": "1762228444668",
+    "from": "El eo",
+    "to": "Tilin",
+    "type": "text",
+    "content": "Eo eo"
+  },
+  {
+    "timestamp": "1762228462627",
+    "from": "El eo",
+    "to": "Tilin",
+    "type": "text",
+    "content": "Eo eo"
+
   }
 ]

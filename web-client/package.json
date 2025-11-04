@@ -1,0 +1,23 @@
+{
+  "name": "web-client",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack"
+  },
+  "author": "AMB",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "axios": "^1.12.2",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "serve": "^14.2.5",
+    "webpack": "^5.102.1",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "webpack-cli": "^6.0.1"
+  }
+}
