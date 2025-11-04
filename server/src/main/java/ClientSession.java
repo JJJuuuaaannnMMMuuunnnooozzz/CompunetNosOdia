@@ -63,6 +63,7 @@ public class ClientSession implements Runnable {
 
     private void processCommand(String command) {
         try {
+            System.out.println("[DEBUG] JSON recibido: " + command);
             String response = "";
             Request rq = gson.fromJson(command, Request.class);
 
@@ -167,6 +168,20 @@ public class ClientSession implements Runnable {
                     }
 
                     PersistenceManager.saveMessage(username, gName, "text", rq.getData().get("message").getAsString());
+                    response = "OK";
+                    break;
+
+                case "GET_HISTORY":
+                    System.out.println("Consultando historial completo...");
+
+                    // Cargar todos los mensajes del archivo principal
+                    List<Map<String, String>> allMessages = PersistenceManager.loadMessages();
+
+                    JsonObject fullHistoryResponse = new JsonObject();
+                    fullHistoryResponse.addProperty("command", "HISTORY_RESULT");
+                    fullHistoryResponse.add("data", gson.toJsonTree(allMessages));
+
+                    sendMessage(gson.toJson(fullHistoryResponse));
                     response = "OK";
                     break;
 

@@ -423,5 +423,68 @@
     "to": "El eo",
     "type": "text",
     "content": "Tilin tilin"
+  },
+  {
+    "timestamp": "1762275658641",
+    "from": "b",
+    "to": "b",
+    "type": "text",
+    "content": "aaa"
+  },
+  {
+    "timestamp": "1762275815888",
+    "from": "b",
+    "to": "Abecedario",
+    "type": "text",
+    "content": "qwerty"
+  },
+  {
+    "timestamp": "1762276402199",
+    "from": "b",
+    "to": "Abecedario",
+    "type": "text",
+    "content": "aaa"
+  },
+  {
+    "timestamp": "1762276427737",
+    "from": "a",
+    "to": "Abecedario",
+    "type": "text",
+    "content": "aaa"
+  },
+  {
+    "timestamp": "1762277281140",
+    "from": "b",
+    "to": "b",
+    "type": "text",
+    "content": "aaa"
+  },
+  {
+    "timestamp": "1762277297367",
+    "from": "b",
+    "to": "b",
+    "type": "text",
+    "content": "Hola soy a"
+  },
+  {
+    "timestamp": "1762277304948",
+    "from": "b",
+    "to": "a",
+    "type": "text",
+    "content": "Hola soy b"
+  },
+  {
+    "timestamp": "1762277340499",
+    "from": "b",
+    "to": "Abecedario",
+    "type": "text",
+    "content": "BBBuenas tardes"
+  },
+  {
+    "timestamp": "1762278155575",
+    "from": "b",
+    "to": "b",
+    "type": "text",
+    "content": "hola b, soy a"
   }
 ]

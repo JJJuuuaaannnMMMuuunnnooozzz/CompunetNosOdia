@@ -136,7 +136,38 @@ app.post('/register', async (req, res) => {
     }
 });
 
+app.post('/history', (req, res) => {
+    const { user } = req.body;
 
+    const payload = {
+        command: "GET_HISTORY",
+        data: {
+            user: user
+        }
+    };
+
+    if (connected) {
+        socket.write(JSON.stringify(payload));
+        socket.write("\n");
+
+        socket.once("data", (data) => {
+            const message = data.toString().trim();
+            try {
+                const parsed = JSON.parse(message);
+                res.json(parsed);
+            } catch (err) {
+                res.json({ raw: message });
+            }
+        });
+
+        socket.once("error", (err) => {
+            console.error("Error de socket durante GET_HISTORY:", err);
+            res.status(500).json({ error: "Error de conexión con el servidor de chat." });
+        });
+    } else {
+        res.status(503).json({ error: "Socket no conectado al servidor Java." });
+    }
+});
 
 app.post('/group/create', (req, res) =>{
     const { groupName } = req.body
