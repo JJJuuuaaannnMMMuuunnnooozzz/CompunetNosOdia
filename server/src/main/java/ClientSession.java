@@ -139,19 +139,35 @@ public class ClientSession implements Runnable {
                     break;
 
                 case "MSG_GROUP":
-
                     String gName = rq.getData().get("group").getAsString().trim();
+
+                    if (!Server.groups.containsKey(gName)) {
+                        response = "ERROR: Grupo no existe";
+                        break;
+                    }
+
                     List<String> receivers = Server.groups.get(gName).stream().toList();
 
-                    String cmd = "GET_MSG_GROUP";
-                    rq.setCommand(cmd);
-                    String msg = gson.toJson(rq);
+                    // CAMBIO: Crear el formato correcto para el mensaje
+                    JsonObject responseData = new JsonObject();
+                    responseData.addProperty("group", gName);
+                    responseData.addProperty("sender", username);
+                    responseData.addProperty("message", rq.getData().get("message").getAsString());
+
+                    JsonObject fullResponse = new JsonObject();
+                    fullResponse.addProperty("command", "GET_MSG_GROUP");
+                    fullResponse.add("data", responseData);
+
+                    String msg = gson.toJson(fullResponse);
 
                     for (String r : receivers) {
-                        Server.clients.get(r).sendMessage(msg);
+                        if (Server.clients.containsKey(r) && !r.equals(username)) {
+                            Server.clients.get(r).sendMessage(msg);
+                        }
                     }
-                    response = "OK";
 
+                    PersistenceManager.saveMessage(username, gName, "text", rq.getData().get("message").getAsString());
+                    response = "OK";
                     break;
 
                 /*
