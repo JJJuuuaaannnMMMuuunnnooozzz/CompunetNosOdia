@@ -5,7 +5,7 @@ export default function Home({ chatId } = {}) {
   const container = document.createElement("div");
   container.className = "layout";
 
-  // WebSocket entrante (sin cambios de endpoints ni formato)
+  // WebSocket entrante
   const socket = new WebSocket("ws://localhost:3002");
   socket.onopen = () => console.log("Conectado al WebSocket del proxy.");
   socket.onmessage = (event) => {
@@ -30,7 +30,7 @@ export default function Home({ chatId } = {}) {
         nuevo.innerHTML = `<span class="tag tag-group">${groupName}</span> <strong>${sender}:</strong> ${content}`;
         receivedBox?.prepend(nuevo);
       } else {
-        // Otros mensajes WS (debug)
+        // Otros mensajes WS
         nuevo.className = "ws-item muted";
         nuevo.textContent = JSON.stringify(fullMessage);
         receivedBox?.prepend(nuevo);
@@ -40,7 +40,6 @@ export default function Home({ chatId } = {}) {
     }
   };
 
-  // UI (sidebar rediseñado: Notas de voz + Llamadas)
   container.innerHTML = `
     <div class="sidebar">
       <div class="side-header">
@@ -52,7 +51,6 @@ export default function Home({ chatId } = {}) {
       </div>
 
       <div class="side-stack">
-        <!-- Tarjeta: Notas de voz -->
         <div class="side-card">
           <h3 class="side-title">Notas de voz</h3>
           <p class="side-subtitle">Envía notas a un usuario o a un grupo</p>
@@ -78,7 +76,6 @@ export default function Home({ chatId } = {}) {
           <button type="button" class="btn">Enviar nota</button>
         </div>
 
-        <!-- Tarjeta: Llamadas -->
         <div class="side-card">
           <h3 class="side-title">Llamadas</h3>
           <p class="side-subtitle">Inicia/termina llamadas a usuario o grupo</p>
@@ -99,12 +96,9 @@ export default function Home({ chatId } = {}) {
           <div class="row">
             <button type="button" class="btn">Llamar</button>
             <button type="button" class="btn ghost">Colgar</button>
-            <!-- Si prefieres rojo para colgar:
-                <button type="button" class="btn danger">Colgar</button> -->
           </div>
         </div>
 
-        <!-- Contenedor de chats oculto para no romper código existente -->
         <div id="chatList" class="chat-list"></div>
       </div>
     </div>
@@ -148,14 +142,12 @@ export default function Home({ chatId } = {}) {
         <section class="panel">
           <h2>Funcionalidades de Grupo</h2>
 
-          <!-- 3. Crear Grupo (solo nombre) -->
           <form id="createGroupForm" class="form">
             <h3>3. Crear Grupo</h3>
             <input type="text" id="groupName" placeholder="Nombre del grupo" required />
             <button type="submit">Crear Grupo</button>
           </form>
 
-          <!-- 4. Añadir a Grupo (grupo + miembro único) -->
           <form id="addToGroupForm" class="form">
             <h3>4. Añadir a Grupo</h3>
             <input type="text" id="groupNameAdd" placeholder="Nombre del grupo" required />
@@ -163,7 +155,6 @@ export default function Home({ chatId } = {}) {
             <button type="submit">Añadir Miembros</button>
           </form>
 
-          <!-- 5. Enviar Mensaje a Grupo (groupName + message) -->
           <form id="groupMessageForm" class="form">
             <h3>5. Enviar Mensaje a Grupo</h3>
             <input type="text" id="groupNameMsg" placeholder="Nombre del grupo" required />
@@ -173,7 +164,6 @@ export default function Home({ chatId } = {}) {
         </section>
       </div>
 
-      <!-- RESULTADOS: solo WebSocket, a todo el ancho -->
       <section class="results" style="grid-template-columns: 1fr;">
         <div class="result-box">
           <h3>Mensajes recibidos (WebSocket)</h3>
@@ -181,7 +171,6 @@ export default function Home({ chatId } = {}) {
         </div>
       </section>
 
-      <!-- Modal de historial (se mantiene igual) -->
       <div id="historyModal" class="modal hidden">
         <div class="modal-content">
           <span id="closeModal" class="close">&times;</span>
@@ -190,12 +179,10 @@ export default function Home({ chatId } = {}) {
         </div>
       </div>
 
-      <!-- (oculto) placeholder para no romper el código que escribe respuestas HTTP -->
       <pre id="responseBox" style="display:none"></pre>
     </div>
   `;
 
-  // Mantengo tu bloque que intentaba renderizar chats; ahora no se verá (display:none)
   const chatListEl = container.querySelector("#chatList");
   try {
     const sample = [
@@ -214,22 +201,27 @@ export default function Home({ chatId } = {}) {
     console.warn("No se pudo renderizar la lista (omitido):", e);
   }
 
-  // Utilidad para peticiones HTTP al proxy (mismos endpoints)
-  const responseBox = container.querySelector("#responseBox"); // oculto
-  const handleFormSubmit = async (url, body, okMsg) => {
-    if (responseBox) responseBox.textContent = "Cargando...";
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+  // Utilidad para peticiones HTTP al proxy
+    const responseBox = container.querySelector("#responseBox");
+    const handleFormSubmit = async (url, body, method = "POST", okMsg) => {
+        if (responseBox) responseBox.textContent = "Cargando...";
+        try {
+            const options = {
+                method: method,
+                headers: { "Content-Type": "application/json" },
+            };
+
+            if (method !== "GET") {
+                options.body = JSON.stringify(body);
+            }
+
+            const res = await fetch(url, options);
 
       const text = await res.text();
       let parsed;
       try { parsed = JSON.parse(text); } catch { parsed = text; }
 
-      if (url.includes("/history")) {
+      if (url.includes("/history") && method === "GET") {
         const modal = container.querySelector("#historyModal");
         const modalContent = container.querySelector("#modalContent");
 
@@ -263,13 +255,13 @@ export default function Home({ chatId } = {}) {
     }
   };
 
-  // Listeners (sin cambios en rutas del proxy)
+  // Listeners
   container.querySelector("#registerForm").addEventListener("submit", (e) => {
     e.preventDefault();
     const username = container.querySelector("#username").value;
     const clientIp = container.querySelector("#clientIp").value;
     window.loggedUser = username;
-    handleFormSubmit("http://localhost:3001/register", { username, clientIp }, "Registro exitoso:");
+    handleFormSubmit("http://localhost:3001/users", { username, clientIp }, "POST","Registro exitoso:");
   });
 
   container.querySelector("#chatForm").addEventListener("submit", (e) => {
@@ -277,7 +269,7 @@ export default function Home({ chatId } = {}) {
     const sender = container.querySelector("#sender").value;
     const receiver = container.querySelector("#receiver").value;
     const message = container.querySelector("#message").value;
-    handleFormSubmit("http://localhost:3001/chat", { sender, receiver, message }, "Mensaje privado enviado:");
+    handleFormSubmit("http://localhost:3001/messages", { sender, receiver, message }, "POST","Mensaje privado enviado:");
   });
 
   container.querySelector("#historyForm").addEventListener("submit", (e) => {
@@ -288,7 +280,7 @@ export default function Home({ chatId } = {}) {
       return;
     }
 
-    handleFormSubmit("http://localhost:3001/history", { user: window.loggedUser }, "Historial cargado:");
+    handleFormSubmit(`http://localhost:3001/users/${window.loggedUser}/history`, null,"GET","Historial cargado:");
   });
 
 
@@ -296,7 +288,7 @@ export default function Home({ chatId } = {}) {
   container.querySelector("#createGroupForm").addEventListener("submit", (e) => {
     e.preventDefault();
     const groupName = container.querySelector("#groupName").value;
-    handleFormSubmit("http://localhost:3001/group/create", { groupName }, "Grupo creado:");
+    handleFormSubmit("http://localhost:3001/groups", { groupName }, "POST","Grupo creado:");
   });
 
   // 4. Añadir a grupo
@@ -305,21 +297,21 @@ export default function Home({ chatId } = {}) {
     const groupName = container.querySelector("#groupNameAdd").value;
     const member = container.querySelector("#memberToAdd").value;
     handleFormSubmit(
-      "http://localhost:3001/group/add",
-      { groupName, member, username: member, members: [member] },
-      "Miembro añadido al grupo:"
+        `http://localhost:3001/groups/${groupName}/members`,
+      { members: [member] },
+        "POST",
+        "Miembro añadido al grupo:"
     );
   });
 
-  // 5. Enviar mensaje a grupo (tu contrato: groupName + message)
+  // 5. Enviar mensaje a grupo
   container.querySelector("#groupMessageForm").addEventListener("submit", (e) => {
     e.preventDefault();
-    const groupName = container.querySelector("#groupNameMsg").value;
     const message = container.querySelector("#groupMessage").value;
-    handleFormSubmit("http://localhost:3001/group/message", { groupName, message }, "Mensaje de grupo enviado:");
+    const groupName = container.querySelector("#groupNameMsg").value;
+    handleFormSubmit(`http://localhost:3001/groups/${groupName}/messages`, { message }, "POST","Mensaje de grupo enviado:");
   });
 
-  // Modal Historial
   const modal = container.querySelector("#historyModal");
   const closeModal = container.querySelector("#closeModal");
   closeModal.addEventListener("click", () => modal.classList.add("hidden"));

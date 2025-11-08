@@ -68,7 +68,7 @@ socket.connect(9090, "127.0.0.1", () =>{
 
 
 
-app.post('/chat',(req,res) =>{
+app.post('/messages',(req,res) =>{
     const { sender, receiver, message } = req.body;
     const backReq = {
         command: "MSG_USER",
@@ -98,8 +98,9 @@ app.post('/chat',(req,res) =>{
 
 });
 
-app.post('/register', async (req, res) => {
+app.post('/users', async (req, res) => {
     const { username, clientIp } = req.body;
+    console.log(username)
 
     const raw = {
         command: "REGISTER",
@@ -136,8 +137,8 @@ app.post('/register', async (req, res) => {
     }
 });
 
-app.post('/history', (req, res) => {
-    const { user } = req.body;
+app.get('/users/:username/history', (req, res) => {
+    const user = req.params.username;
 
     const payload = {
         command: "GET_HISTORY",
@@ -169,7 +170,7 @@ app.post('/history', (req, res) => {
     }
 });
 
-app.post('/group/create', (req, res) =>{
+app.post('/groups', (req, res) =>{
     const { groupName } = req.body
 
     const raw = {
@@ -205,8 +206,9 @@ app.post('/group/create', (req, res) =>{
 });
 
 
-app.post('/group/add', (req, res) => {
-    const { groupName, members } = req.body;
+app.post('/groups/:groupName/members', (req, res) => {
+    const groupName = req.params.groupName;
+    const { members } = req.body;
 
     const payload = {
         command: "ADD_TO_GROUP",
@@ -236,8 +238,9 @@ app.post('/group/add', (req, res) => {
 
 
 
-app.post('/group/message', (req, res) => {
-    const { groupName, sender, message } = req.body;
+app.post('/groups/:groupName/messages', (req, res) => {
+    const groupName = req.params.groupName;
+    const { sender, message } = req.body;
 
     const payload = {
         command: "MSG_GROUP",

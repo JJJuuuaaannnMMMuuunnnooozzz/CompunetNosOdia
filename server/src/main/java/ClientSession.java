@@ -174,11 +174,9 @@ public class ClientSession implements Runnable {
                 case "GET_HISTORY":
                     System.out.println("Consultando historial para: " + username);
 
-                    // Cargar mensajes y grupos
                     List<Map<String, String>> allMessages = PersistenceManager.loadMessages();
                     Map<String, Set<String>> groups = PersistenceManager.loadGroups();
 
-                    // Determinar en qué grupos participa el usuario
                     Set<String> userGroups = new HashSet<>();
                     for (Map.Entry<String, Set<String>> entry : groups.entrySet()) {
                         if (entry.getValue().contains(username)) {
@@ -190,26 +188,19 @@ public class ClientSession implements Runnable {
 
                     for (Map<String, String> msgh : allMessages) {
                         String from = msgh.get("from");
-                        String to = msgh.get("to"); // puede ser usuario o nombre de grupo
-                        // String type = msgh.get("type"); // no lo usamos para distinguir grupo/privado
+                        String to = msgh.get("to");
 
-                        // 1) Mensajes privados relacionados con el usuario (emisor o receptor igual a
-                        // username)
                         if (username.equals(from) || (to != null && username.equals(to))) {
                             filtered.add(msgh);
                             continue;
                         }
 
-                        // 2) Mensajes dirigidos a un grupo: if 'to' es nombre de grupo y el usuario
-                        // pertenece a ese grupo
                         if (to != null && groups.containsKey(to) && userGroups.contains(to)) {
                             filtered.add(msgh);
                             continue;
                         }
 
-                        // si no cumple ninguna condición, no añadir
                     }
-
                     JsonObject fullHistoryResponse = new JsonObject();
                     fullHistoryResponse.addProperty("command", "HISTORY_RESULT");
                     fullHistoryResponse.add("data", gson.toJsonTree(filtered));
@@ -218,236 +209,9 @@ public class ClientSession implements Runnable {
                     response = "OK";
                     break;
 
-                /*
-                 * 
-                 * 
-                 * 
-                 * 
-                 * 
-                 * case "VOICE_USER":
-                 * if (parts.length < 3) {
-                 * sendMessage("Uso: VOICE_USER <usuario> <audioBase64>");
-                 * break;
-                 * }
-                 * String toUser = parts[1];
-                 * String audio64 = parts[2];
-                 * 
-                 * byte[] audioBytes = Base64.getDecoder().decode(audio64);
-                 * String filePath = PersistenceManager.saveAudio(audioBytes, "voice_" +
-                 * username + "_to_" + toUser);
-                 * 
-                 * if (Server.clients.containsKey(toUser)) {
-                 * Server.clients.get(toUser).sendMessage("VOICE_FROM " + username + " " +
-                 * audio64);
-                 * PersistenceManager.saveMessage(username, toUser, "voice", filePath);
-                 * sendMessage("Nota de voz enviada a " + toUser);
-                 * } else {
-                 * sendMessage("Usuario '" + toUser + "' no encontrado.");
-                 * }
-                 * break;
-                 * 
-                 * case "VOICE_GROUP":
-                 * if (parts.length < 3) {
-                 * sendMessage("Uso: VOICE_GROUP <grupo> <audioBase64>");
-                 * break;
-                 * }
-                 * String groupName = parts[1];
-                 * String audio64Group = parts[2];
-                 * 
-                 * 
-                 * // Verificar que el grupo exista
-                 * 
-                 * byte[] GAudioBytes = Base64.getDecoder().decode(audio64Group);
-                 * String filePathG = PersistenceManager.saveAudio(GAudioBytes, "voice_" +
-                 * username + "_to_" + groupName);
-                 * 
-                 * 
-                 * if (!Server.groups.containsKey(groupName)) {
-                 * sendMessage("El grupo '" + groupName + "' no existe.");
-                 * break;
-                 * }
-                 * 
-                 * // Reenviar la nota de voz a todos los miembros conectados del grupo (excepto
-                 * al
-                 * // emisor)
-                 * for (String member : Server.groups.get(groupName)) {
-                 * if (!member.equals(username) && Server.clients.containsKey(member)) {
-                 * Server.clients.get(member).sendMessage("VOICE_FROM " + username + " " +
-                 * audio64Group);
-                 * }
-                 * }
-                 * 
-                 * PersistenceManager.saveMessage(username, groupName, "voice", filePathG);
-                 * sendMessage("Nota de voz enviada al grupo '" + groupName + "'.");
-                 * 
-                 * break;
-                 * 
-                 * case "CALL_USER":
-                 * if (parts.length < 3) {
-                 * sendMessage("Uso: CALL_USER <usuario> <puertoUDP>");
-                 * break;
-                 * }
-                 * 
-                 * String targetUserCall = parts[1];
-                 * int callerUdpPort = Integer.parseInt(parts[2]);
-                 * ClientSession targetSession = Server.clients.get(targetUserCall);
-                 * 
-                 * if (targetSession != null) {
-                 * targetSession.sendMessage("CALL_FROM " + this.username + " " + this.clientIp
-                 * + " " + callerUdpPort);
-                 * sendMessage("Llamando a " + targetUserCall + "...");
-                 * } else {
-                 * sendMessage("Usuario '" + targetUserCall +
-                 * "' no encontrado o desconectado.");
-                 * }
-                 * break;
-                 * 
-                 * case "ACCEPT_CALL":
-                 * if (parts.length < 3) {
-                 * sendMessage("Uso: ACCEPT_CALL <usuario> <puertoUDP>");
-                 * break;
-                 * }
-                 * String targetUserAccept = parts[1];
-                 * int receiverUdpPort = Integer.parseInt(parts[2]);
-                 * ClientSession callerSession = Server.clients.get(targetUserAccept);
-                 * 
-                 * if (callerSession != null) {
-                 * callerSession.sendMessage("CALL_ACCEPTED " + this.username + " " +
-                 * this.clientIp + " " + receiverUdpPort);
-                 * sendMessage("Llamada aceptada, notificando a " + targetUserAccept);
-                 * } else {
-                 * sendMessage("El usuario que llamó (" + targetUserAccept +
-                 * ") ya se desconectó.");
-                 * }
-                 * break;
-                 * 
-                 * case "END_CALL":
-                 * if (parts.length < 2) {
-                 * sendMessage("Uso: END_CALL <usuario>");
-                 * break;
-                 * }
-                 * String targetEndUser = parts[1];
-                 * ClientSession targetEndSession = Server.clients.get(targetEndUser);
-                 * 
-                 * if (targetEndSession != null) {
-                 * targetEndSession.sendMessage("CALL_ENDED " + this.username);
-                 * sendMessage("Has colgado la llamada con " + targetEndUser);
-                 * } else {
-                 * sendMessage("El usuario " + targetEndUser + " no está conectado.");
-                 * }
-                 * break;
-                 * 
-                 * case "CALL_GROUP":
-                 * if (parts.length < 3) {
-                 * sendMessage("Uso: CALL_GROUP <nombreGrupo> <puertoUDP>");
-                 * break;
-                 * }
-                 * 
-                 * String groupNameCall = parts[1];
-                 * int initiatorPort = Integer.parseInt(parts[2]);
-                 * Set<String> members = Server.groups.get(groupNameCall);
-                 * 
-                 * if (members == null) {
-                 * sendMessage("El grupo '" + groupNameCall + "' no existe.");
-                 * break;
-                 * }
-                 * 
-                 * if (Server.activeGroupCalls.containsKey(groupNameCall)) {
-                 * sendMessage("Ya hay una llamada activa en este grupo.");
-                 * break;
-                 * }
-                 * 
-                 * 
-                 * GroupCallInfo callInfo = new GroupCallInfo(groupNameCall);
-                 * callInfo.addParticipant(username, this.clientIp, initiatorPort);
-                 * Server.activeGroupCalls.put(groupNameCall, callInfo);
-                 * 
-                 * for (String member : members) {
-                 * if (!member.equals(username) && Server.clients.containsKey(member)) {
-                 * Server.clients.get(member).sendMessage(
-                 * "INCOMING_GROUP_CALL " + groupNameCall + " " + username + " " +
-                 * this.clientIp + " " + initiatorPort
-                 * );
-                 * }
-                 * }
-                 * 
-                 * sendMessage("Llamada grupal iniciada en '" + groupNameCall + "'");
-                 * break;
-                 * 
-                 * case "JOIN_GROUP_CALL":
-                 * if (parts.length < 3) {
-                 * sendMessage("Uso: JOIN_GROUP_CALL <nombreGrupo> <puertoUDP>");
-                 * break;
-                 * }
-                 * 
-                 * String groupToJoin = parts[1];
-                 * int joinPort = Integer.parseInt(parts[2]);
-                 * 
-                 * GroupCallInfo activeCall = Server.activeGroupCalls.get(groupToJoin);
-                 * if (activeCall == null) {
-                 * sendMessage("No hay llamada activa para el grupo '" + groupToJoin + "'.");
-                 * break;
-                 * }
-                 * 
-                 * 
-                 * for (Map.Entry<String, ParticipantInfo> entry :
-                 * activeCall.getParticipants().entrySet()) {
-                 * String existingUser = entry.getKey();
-                 * ParticipantInfo pInfo = entry.getValue();
-                 * 
-                 * if (!existingUser.equals(username) &&
-                 * Server.clients.containsKey(existingUser)) {
-                 * 
-                 * Server.clients.get(existingUser).sendMessage(
-                 * "GROUP_CALL_PARTICIPANT " + groupToJoin + " " + username + " " +
-                 * this.clientIp + " " + joinPort
-                 * );
-                 * 
-                 * 
-                 * sendMessage(
-                 * "GROUP_CALL_PARTICIPANT " + groupToJoin + " " + existingUser + " " +
-                 * pInfo.ip + " " + pInfo.port
-                 * );
-                 * }
-                 * }
-                 * 
-                 * activeCall.addParticipant(username, this.clientIp, joinPort);
-                 * sendMessage("Te has unido a la llamada grupal '" + groupToJoin + "'");
-                 * break;
-                 * 
-                 * case "END_GROUP_CALL":
-                 * if (parts.length < 2) {
-                 * sendMessage("Uso: END_GROUP_CALL <nombreGrupo>");
-                 * break;
-                 * }
-                 * 
-                 * String groupToEnd = parts[1];
-                 * GroupCallInfo callToEnd = Server.activeGroupCalls.get(groupToEnd);
-                 * 
-                 * if (callToEnd == null) {
-                 * sendMessage("No hay llamada activa para el grupo '" + groupToEnd + "'.");
-                 * break;
-                 * }
-                 * 
-                 * callToEnd.removeParticipant(username);
-                 * 
-                 * for (String participant : callToEnd.getParticipants().keySet()) {
-                 * if (Server.clients.containsKey(participant)) {
-                 * Server.clients.get(participant).sendMessage("GROUP_CALL_LEFT " + groupToEnd +
-                 * " " + username);
-                 * }
-                 * }
-                 * 
-                 * sendMessage("Has salido de la llamada grupal '" + groupToEnd + "'.");
-                 * 
-                 * if (callToEnd.getParticipants().isEmpty()) {
-                 * Server.activeGroupCalls.remove(groupToEnd);
-                 * System.out.println("Llamada grupal '" + groupToEnd +
-                 * "' finalizada (sin participantes).");
-                 * }
-                 * break;
-                 * 
-                 */
+
+
+
 
                 default:
                     sendMessage("Comando no reconocido.");
