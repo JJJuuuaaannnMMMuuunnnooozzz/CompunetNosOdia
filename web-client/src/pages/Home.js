@@ -140,7 +140,7 @@ export default function Home({ chatId } = {}) {
 
           <form id="historyForm" class="form">
             <h3>3. Historial Privado</h3>
-            <input type="text" id="historyUser" placeholder="Usuario" required />
+            <p>Se consultará automáticamente el historial del usuario loggeado.</p>
             <button type="submit">Consultar Historial</button>
           </form>
         </section>
@@ -249,9 +249,8 @@ export default function Home({ chatId } = {}) {
         modal.classList.remove("hidden");
       } else {
         if (responseBox) {
-          responseBox.textContent = `[STATUS: ${res.status}] ${
-            typeof parsed === "string" ? parsed : JSON.stringify(parsed, null, 2)
-          }`;
+          responseBox.textContent = `[STATUS: ${res.status}] ${typeof parsed === "string" ? parsed : JSON.stringify(parsed, null, 2)
+            }`;
         } else {
           console.log("[RESPUESTA HTTP]", res.status, parsed);
         }
@@ -269,6 +268,7 @@ export default function Home({ chatId } = {}) {
     e.preventDefault();
     const username = container.querySelector("#username").value;
     const clientIp = container.querySelector("#clientIp").value;
+    window.loggedUser = username;
     handleFormSubmit("http://localhost:3001/register", { username, clientIp }, "Registro exitoso:");
   });
 
@@ -282,9 +282,15 @@ export default function Home({ chatId } = {}) {
 
   container.querySelector("#historyForm").addEventListener("submit", (e) => {
     e.preventDefault();
-    const historyUser = container.querySelector("#historyUser").value;
-    handleFormSubmit("http://localhost:3001/history", { user: historyUser }, "Historial cargado:");
+
+    if (!window.loggedUser) {
+      alert("Primero registre un usuario.");
+      return;
+    }
+
+    handleFormSubmit("http://localhost:3001/history", { user: window.loggedUser }, "Historial cargado:");
   });
+
 
   // 3. Crear grupo
   container.querySelector("#createGroupForm").addEventListener("submit", (e) => {

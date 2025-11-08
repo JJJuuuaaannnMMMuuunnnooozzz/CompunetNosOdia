@@ -172,14 +172,47 @@ public class ClientSession implements Runnable {
                     break;
 
                 case "GET_HISTORY":
-                    System.out.println("Consultando historial completo...");
+                    System.out.println("Consultando historial para: " + username);
 
-                    // Cargar todos los mensajes del archivo principal
+                    // Cargar mensajes y grupos
                     List<Map<String, String>> allMessages = PersistenceManager.loadMessages();
+                    Map<String, Set<String>> groups = PersistenceManager.loadGroups();
+
+                    // Determinar en qué grupos participa el usuario
+                    Set<String> userGroups = new HashSet<>();
+                    for (Map.Entry<String, Set<String>> entry : groups.entrySet()) {
+                        if (entry.getValue().contains(username)) {
+                            userGroups.add(entry.getKey());
+                        }
+                    }
+
+                    List<Map<String, String>> filtered = new ArrayList<>();
+
+                    for (Map<String, String> msgh : allMessages) {
+                        String from = msgh.get("from");
+                        String to = msgh.get("to"); // puede ser usuario o nombre de grupo
+                        // String type = msgh.get("type"); // no lo usamos para distinguir grupo/privado
+
+                        // 1) Mensajes privados relacionados con el usuario (emisor o receptor igual a
+                        // username)
+                        if (username.equals(from) || (to != null && username.equals(to))) {
+                            filtered.add(msgh);
+                            continue;
+                        }
+
+                        // 2) Mensajes dirigidos a un grupo: if 'to' es nombre de grupo y el usuario
+                        // pertenece a ese grupo
+                        if (to != null && groups.containsKey(to) && userGroups.contains(to)) {
+                            filtered.add(msgh);
+                            continue;
+                        }
+
+                        // si no cumple ninguna condición, no añadir
+                    }
 
                     JsonObject fullHistoryResponse = new JsonObject();
                     fullHistoryResponse.addProperty("command", "HISTORY_RESULT");
-                    fullHistoryResponse.add("data", gson.toJsonTree(allMessages));
+                    fullHistoryResponse.add("data", gson.toJsonTree(filtered));
 
                     sendMessage(gson.toJson(fullHistoryResponse));
                     response = "OK";
