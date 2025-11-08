@@ -1,137 +1,121 @@
-\section*{Tarea 2 – Cliente HTTP con Proxy (README)}
+# Tarea 2 – Cliente HTTP con Proxy (README)
 
-\subsection*{Instrucciones para ejecutar el sistema}
+## 1. Instrucciones para ejecutar el sistema
 
-\subsubsection*{Primera vez (instalación de dependencias)}
+### Primera vez (instalación de dependencias)
 
-\paragraph{Backend Java (en la raíz del repo, donde está \texttt{gradlew}):}
-\begin{verbatim}
+Backend Java (en la raíz del repo, donde está `gradlew`):
+```bash
 ./gradlew clean build
-\end{verbatim}
+```
 
-\paragraph{En Windows:}
-\begin{verbatim}
-.\gradlew.bat clean build
-\end{verbatim}
-
-\paragraph{Cliente web y proxy (dentro de \texttt{web-client}):}
-\begin{verbatim}
+Cliente web y proxy (dentro de `web-client`):
+```bash
 cd web-client
 npm install
-\end{verbatim}
+```
 
-\paragraph{Si el proxy tiene su propio \texttt{package.json} en \texttt{web-client/proxy}:}
-\begin{verbatim}
-cd web-client/proxy
-npm install
-cd ..
-\end{verbatim}
+### Ejecución (cada vez que se use el sistema)
 
-\subsubsection*{Ejecución (cada vez que se use el sistema)}
+#### Iniciar el servidor en Java
+Ejecutar la clase `Server.java` (desde el IDE)
 
-\paragraph{Iniciar el servidor en Java}
-Ejecutar la clase \texttt{Server.java} (desde el IDE) \\
-o, si existe tarea Gradle para correrlo:
-\begin{verbatim}
-./gradlew run
-\end{verbatim}
-(usar \texttt{.\textbackslash gradlew.bat run} en Windows)
-
-\paragraph{Levantar el proxy HTTP (en \texttt{web-client}):}
-\begin{verbatim}
+#### Levantar el proxy HTTP (en `web-client`):
+```bash
 node proxy/index.js
-\end{verbatim}
+```
 
-\paragraph{Servir el cliente web (nueva terminal en \texttt{web-client}):}
-\begin{verbatim}
+#### Servir el cliente web (nueva terminal en web-client):
+```bash
 npx serve -s
-\end{verbatim}
+```
 
 Abrir en el navegador el enlace que imprime el paso anterior.
 
-\subsection*{Descripción del flujo de comunicación entre cliente, proxy y backend}
+## 2. Descripción del flujo de comunicación entre cliente, proxy y backend
 
-\subsubsection*{1) Conexiones que permanecen abiertas}
+### Conexiones que permanecen abiertas
 
-\textbf{Proxy \(\leftrightarrow\) Backend Java (TCP):} el proxy abre un \texttt{net.Socket()} hacia \texttt{127.0.0.1:9090} y lo mantiene vivo. Cada petición HTTP se traduce a una línea JSON (terminada en \verb|\n|) enviada por ese socket. Las respuestas del backend llegan por el evento \texttt{"data"}, se interpretan como JSON (línea a línea) y se devuelven al cliente como HTTP/JSON.
+* **Proxy ↔ Backend Java (TCP):** el proxy abre un `net.Socket()` hacia `127.0.0.1:9090` y lo mantiene vivo. Cada petición HTTP se traduce a una línea JSON (terminada en `\n`) enviada por ese socket. Las respuestas del backend llegan por el evento `data`, se interpretan como JSON (línea a línea) y se devuelven al cliente como HTTP/JSON.
+* **Cliente (browser) ↔ Proxy (WebSocket):** además del canal HTTP, el navegador abre un WebSocket a `ws://localhost:3002`. El proxy reenvía por ese WS eventos entrantes que el backend emita (p. ej., mensajes recibidos), permitiendo “push” desde el servidor sin refrescar.
 
-\textbf{Cliente (browser) \(\leftrightarrow\) Proxy (WebSocket):} además del canal HTTP, el navegador abre un WebSocket a \texttt{ws://localhost:3002}. El proxy reenvía por ese WS eventos entrantes que el backend emita (p.\,ej., mensajes recibidos), permitiendo “push” desde el servidor sin refrescar.
+### 2. Patrón general (HTTP → TCP → HTTP) para operaciones “pull”
 
-\subsubsection*{2) Patrón general (HTTP \(\rightarrow\) TCP \(\rightarrow\) HTTP) para operaciones ``pull''}
+**Cliente (HTTP POST) → Proxy**
 
-\paragraph{Cliente (HTTP POST) \(\rightarrow\) Proxy}
-La UI envía \texttt{fetch} con JSON al proxy. Ejemplos reales del proyecto:
-\begin{itemize}
-  \item Registrar usuario \(\rightarrow\) \texttt{POST /register \{ username, clientIp \}}
-  \item Enviar privado \(\rightarrow\) \texttt{POST /chat \{ sender, receiver, message \}}
-  \item Historial \(\rightarrow\) \texttt{POST /history \{ user \}}
-  \item Crear grupo \(\rightarrow\) \texttt{POST /group/create \{ groupName \}}
-  \item Añadir a grupo \(\rightarrow\) \texttt{POST /group/add \{ groupName, members:[...] \}}
-  \item Mensaje a grupo \(\rightarrow\) \texttt{POST /group/message \{ groupName, sender?, message \}}
-\end{itemize}
+La UI envía `fetch` con JSON al proxy. Ejemplos reales del proyecto:
+* Registrar usuario → `POST /register` `{ username, clientIp }`
+* Enviar privado → `POST /chat` `{ sender, receiver, message }`
+* Historial → `POST /history` `{ user }`
+* Crear grupo → `POST /group/create` `{ groupName }`
+* Añadir a grupo → `POST /group/add` `{ groupName, members:[...] }`
+* Mensaje a grupo → `POST /group/message` `{ groupName, sender?, message }`
 
-\paragraph{Proxy (traducción) \(\rightarrow\) Backend Java (TCP JSON line-based)}
-El proxy mapea cada endpoint HTTP a un comando JSON que el backend entiende, lo serializa y lo escribe por el socket, agregando \verb|\n| como delimitador de mensaje. Ejemplos exactos del código del proxy:
-\begin{verbatim}
-/register      -> {"command":"REGISTER","data":{"username":...,"clientIp":...}}\n
-/chat          -> {"command":"MSG_USER","data":{"sender":...,"receiver":...,"message":...}}\n
-/history       -> {"command":"GET_HISTORY","data":{"user":...}}\n
-/group/create  -> {"command":"CREATE_GROUP","data":{"group":...}}\n
-/group/add     -> {"command":"ADD_TO_GROUP","data":{"group":...,"members":[...]}}\n
-/group/message -> {"command":"MSG_GROUP","data":{"group":...,"sender":...,"message":...}}\n
-\end{verbatim}
+**Proxy (traducción) → Backend Java (TCP JSON line-based)**
 
-\paragraph{Backend Java \(\rightarrow\) Proxy (TCP) \(\rightarrow\) Cliente (HTTP JSON)}
-Cuando llega una respuesta por \texttt{"data"}, el proxy intenta parsear JSON y responde al \texttt{fetch} con \texttt{res.json(...)}. En flujos como \texttt{/chat} y \texttt{/history}, esto es directo; en \texttt{/register} y \texttt{/group/create} además se revisa si la respuesta incluye \texttt{"OK"} para decidir \texttt{200} o \texttt{409}. Si la respuesta no es JSON válido, se retorna el texto crudo para depurar.
+El proxy mapea cada endpoint HTTP a un comando JSON que el backend entiende, lo serializa y lo escribe por el socket, agregando `\n` como delimitador de mensaje. Ejemplos exactos del código del proxy:
 
-\subsubsection*{3) Patrón ``push'' (eventos entrantes del backend \(\rightarrow\) navegador vía WebSocket)}
-El proxy corre un \texttt{WebSocket.Server} en \texttt{:3002}. Cuando el backend envía por el socket TCP eventos con \texttt{command:"GET_MESSAGE"} (privado) o \texttt{command:"GET_MSG_GROUP"} (grupo), el proxy difunde ese JSON a todos los clientes WS conectados.
+```bash
+/register       → {"command":"REGISTER","data":{"username": "...", "clientIp": "..."}}\n
+/chat           → {"command":"MSG_USER","data":{"sender":"...","receiver":"...","message":"..."}}\n
+/history        → {"command":"GET_HISTORY","data":{"user":"..."}}\n
+/group/create   → {"command":"CREATE_GROUP","data":{"group":"..."}}\n
+/group/add      → {"command":"ADD_TO_GROUP","data":{"group":"...","members":[...]}}\n
+/group/message  → {"command":"MSG_GROUP","data":{"group":"...","sender":"...","message":"..."}}\n
+```
 
-En el navegador, \texttt{Home.js} abre \texttt{new WebSocket("ws://localhost:3002")}, y en \texttt{onmessage} clasifica por \texttt{fullMessage.command}:
-\begin{itemize}
-  \item \texttt{GET_MESSAGE} \(\rightarrow\) renderiza \texttt{"Privado: \{sender\}: \{message\}"}.
-  \item \texttt{GET_MSG_GROUP} \(\rightarrow\) renderiza \texttt{"\{group\}: \{sender\}: \{message\}"}.
-\end{itemize}
-Estos se insertan en el panel \texttt{“Mensajes recibidos (WebSocket)”} en tiempo real.
+**Backend Java → Proxy (TCP) → Cliente (HTTP JSON)**
 
-\subsubsection*{4) Ejemplos de extremo a extremo (con cargas reales del proyecto)}
+Cuando llega una respuesta por `data`, el proxy intenta parsear JSON y responde al `fetch` con `res.json(...)`. En flujos como `/chat` y `/history`, esto es directo; en `/register` y `/group/create` además se revisa si la respuesta incluye `OK` para decidir `200` o `409`. Si la respuesta no es JSON válido, se retorna el texto crudo para depurar.
 
-\paragraph{Enviar mensaje privado (pull + ack):}
-\begin{enumerate}
-  \item UI \(\rightarrow\) \texttt{POST /chat} con \texttt{\{sender, receiver, message\}}.
-  \item Proxy \(\rightarrow\) TCP: \texttt{\{"command":"MSG\_USER","data":\{...\}\}\textbackslash n}.
-  \item Backend procesa y responde con JSON (p.\,ej., \texttt{\{"status":"OK","msgId":"...","timestamp":...\}}).
-  \item Proxy \(\rightarrow\) UI: \texttt{200 OK} con ese JSON (se muestra en la UI).
-\end{enumerate}
+### Patrón “push” (eventos entrantes del backend → navegador vía WebSocket)
 
-\paragraph{Mensaje de grupo y recepción ``push'':}
-\begin{enumerate}
-  \item UI \(\rightarrow\) \texttt{POST /group/message} con \texttt{\{groupName, message\}} (y \texttt{sender} si aplica).
-  \item Proxy \(\rightarrow\) TCP: \texttt{\{"command":"MSG\_GROUP","data":\{...\}\}\textbackslash n}.
-  \item Backend puede, además del \textit{ack}, emitir un evento \texttt{\{"command":"GET\_MSG\_GROUP","data":\{group,sender,message\}\}}.
-  \item Proxy difunde por WS; la UI lo pinta en \texttt{“Mensajes recibidos (WebSocket)”} sin refresco.
-\end{enumerate}
+El proxy corre un `WebSocket.Server` en `:3002`. Cuando el backend envía por el socket TCP eventos con `command:"GET_MESSAGE"` (privado) o `command:"GET_MSG_GROUP"` (grupo), el proxy difunde ese JSON a todos los clientes WS conectados.
 
-\paragraph{Historial (pull):}
-\begin{enumerate}
-  \item UI \(\rightarrow\) \texttt{POST /history} con \texttt{\{user\}} (el “logeado” en la UI).
-  \item Proxy \(\rightarrow\) TCP: \texttt{\{"command":"GET\_HISTORY","data":{"user":...}\}\textbackslash n}.
-  \item Backend devuelve listado (JSON); si no fuese JSON, el proxy retorna el texto crudo.
-  \item UI abre un modal y muestra los mensajes ya convertidos a líneas legibles.
-\end{enumerate}
+En el navegador, `Home.js` abre `new WebSocket("ws://localhost:3002")`, y en `onmessage` clasifica por `fullMessage.command`:
 
-\subsubsection*{5) Contratos, delimitación y manejo de errores}
+* `GET_MESSAGE` → renderiza `Privado: {sender}: {message}`
+* `GET_MSG_GROUP` → renderiza `{group}: {sender}: {message}`
 
-\begin{itemize}
-  \item \textbf{Delimitación de mensajes:} el proxy escribe una petición por línea (JSON + \verb|\n|) y consume respuestas por el evento \texttt{"data"}. Este contrato \textit{line-based} evita que el backend tenga que “rearmar” fragmentos TCP.
-  \item \textbf{Mapeo de estados a HTTP:} cuando el backend responde con éxito (p.\,ej., contiene \texttt{"OK"} o JSON de éxito), el proxy responde \texttt{200}. En conflictos (p.\,ej., duplicados), el proxy devuelve \texttt{409}; y en fallos de conexión/parseo, \texttt{5xx}.
-  \item \textbf{Canal de eventos:} cualquier JSON entrante con \texttt{command} conocido (\texttt{GET\_MESSAGE}, \texttt{GET\_MSG\_GROUP}) se emite a todos los WS conectados; el cliente clasifica y renderiza según \texttt{command} y \texttt{data}.
-\end{itemize}
+Estos se insertan en el panel “Mensajes recibidos (WebSocket)” en tiempo real.
 
-\subsection*{Integrantes del grupo}
+### Ejemplos de extremo a extremo (con cargas reales del proyecto)
 
-\begin{itemize}
-  \item [Nombre 1] – [Correo/Rol]
-  \item [Nombre 2] – [Correo/Rol]
-  \item [Nombre 3] – [Correo/Rol]
-\end{itemize}
+**Enviar mensaje privado (pull + ack):**
+
+1.  UI → `POST /chat` con `{sender, receiver, message}`.
+2.  Proxy → TCP: `{"command":"MSG_USER","data":{...}}\n`.
+3.  Backend procesa y responde con JSON (p. ej., `{"status":"OK","msgId":"...","timestamp":...}`).
+4.  Proxy → UI: `200 OK` con ese JSON (se muestra en la UI).
+
+**Mensaje de grupo y recepción “push”:**
+
+1.  UI → `POST /group/message` con `{groupName, message}` (y `sender` si aplica).
+2.  Proxy → TCP: `{"command":"MSG_GROUP","data":{...}}\n`.
+3.  Backend puede, además del ack, emitir un evento `{"command":"GET_MSG_GROUP","data":{"group":"...","sender":"...","message":"..."}}`.
+4.  Proxy difunde por WS; la UI lo pinta en “Mensajes recibidos (WebSocket)” sin refresco.
+
+**Historial (pull):**
+
+1.  UI → `POST /history` con `{user}` (el “logeado” en la UI).
+2.  Proxy → TCP: `{"command":"GET_HISTORY","data":{"user":"..."}}\n`.
+3.  Backend devuelve listado (JSON); si no fuese JSON, el proxy retorna el texto crudo.
+4.  UI abre un modal y muestra los mensajes ya convertidos a líneas legibles.
+
+### Contratos, delimitación y manejo de errores
+
+* **Delimitación de mensajes:** el proxy escribe una petición por línea (JSON + `\n`) y consume respuestas por el evento `data`. Este contrato *line-based* evita que el backend tenga que “rearmar” fragmentos TCP.
+* **Mapeo de estados a HTTP:** cuando el backend responde con éxito (p. ej., contiene `OK` o JSON de éxito), el proxy responde `200`. En conflictos (p. ej., duplicados), el proxy devuelve `409`; y en fallos de conexión/parseo, `5xx`.
+* **Canal de eventos:** cualquier JSON entrante con `command` conocido (`GET_MESSAGE`, `GET_MSG_GROUP`) se emite a todos los WS conectados; el cliente clasifica y renderiza según `command` y `data`.
+
+---
+
+## 3. Integrantes del grupo
+
+* [Juan Sebastian Rodríguez Legarda] – [A00405229]
+* [Johan Stiven Suarez Perdomo] – [A00404253]
+* [Juan José Muñoz Franco] – [A00405005]
+
+
+
+
