@@ -8,6 +8,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// node proxy/index.js ip-externa
+const args = process.argv.slice(2);
+const HOST_IP = args[0] || "127.0.0.1"
+
 
 const WSPORT = 3002;
 const wss = new WebSocket.Server({ port: WSPORT });
@@ -25,7 +29,7 @@ wss.on('connection', (ws) =>{
 const socket = new net.Socket();
 let connected = false;
 
-socket.connect(9090, "127.0.0.1", () =>{
+socket.connect(9090, HOST_IP, () =>{
   connected = true;
   console.log(connected)
 
