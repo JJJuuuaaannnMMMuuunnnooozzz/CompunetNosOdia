@@ -21,8 +21,11 @@ npm install
 Ejecutar la clase `Server.java` (desde el IDE)
 
 #### Levantar el proxy HTTP (en `web-client`):
+
+**Nota:** para conectarse a un servidor externo se pasa la ip como tercer argumento. En caso de llamar un cliente en un 
+servidor local, este tercer parámetro no será necesario.
 ```bash
-node proxy/index.js
+node proxy/index.js ip_externa 
 ```
 
 #### Servir el cliente web (nueva terminal en web-client):
