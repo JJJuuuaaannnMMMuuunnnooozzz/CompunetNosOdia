@@ -59,12 +59,13 @@ La UI envía `fetch` con JSON al proxy. Ejemplos reales del proyecto:
 El proxy mapea cada endpoint HTTP a un comando JSON que el backend entiende, lo serializa y lo escribe por el socket, agregando `\n` como delimitador de mensaje. Ejemplos exactos del código del proxy:
 
 ```bash
-/register       → {"command":"REGISTER","data":{"username": "...", "clientIp": "..."}}\n
-/chat           → {"command":"MSG_USER","data":{"sender":"...","receiver":"...","message":"..."}}\n
-/history        → {"command":"GET_HISTORY","data":{"user":"..."}}\n
-/group/create   → {"command":"CREATE_GROUP","data":{"group":"..."}}\n
-/group/add      → {"command":"ADD_TO_GROUP","data":{"group":"...","members":[...]}}\n
-/group/message  → {"command":"MSG_GROUP","data":{"group":"...","sender":"...","message":"..."}}\n
+POST /users                  → {"command":"REGISTER","data":{...}}\n
+POST /messages               → {"command":"MSG_USER","data":{...}}\n
+GET /users/{username}/history → {"command":"GET_HISTORY","data":{"user":"..."}}\n
+POST /groups                 → {"command":"CREATE_GROUP","data":{"group":"..."}}\n
+POST /groups/{groupName}/members    → {"command":"ADD_TO_GROUP","data":{"group":"...","members":[...]}}\n
+POST /groups/{groupName}/messages   → {"command":"MSG_GROUP","data":{"group":"...","message":"..."}}\n
+
 ```
 
 **Backend Java → Proxy (TCP) → Cliente (HTTP JSON)**
@@ -86,21 +87,21 @@ Estos se insertan en el panel “Mensajes recibidos (WebSocket)” en tiempo rea
 
 **Enviar mensaje privado (pull + ack):**
 
-1.  UI → `POST /chat` con `{sender, receiver, message}`.
+1.  UI → `POST /messages` con `{sender, receiver, message}`.
 2.  Proxy → TCP: `{"command":"MSG_USER","data":{...}}\n`.
 3.  Backend procesa y responde con JSON (p. ej., `{"status":"OK","msgId":"...","timestamp":...}`).
 4.  Proxy → UI: `200 OK` con ese JSON (se muestra en la UI).
 
 **Mensaje de grupo y recepción “push”:**
 
-1.  UI → `POST /group/message` con `{groupName, message}` (y `sender` si aplica).
+1.  UI → `POST /groups/{groupName}/messages` con `{groupName, message}`
 2.  Proxy → TCP: `{"command":"MSG_GROUP","data":{...}}\n`.
-3.  Backend puede, además del ack, emitir un evento `{"command":"GET_MSG_GROUP","data":{"group":"...","sender":"...","message":"..."}}`.
+3.  Backend puede, además del ack, emitir un evento `{"command":"GET_MSG_GROUP","data":{"group":"...","message":"..."}}`.
 4.  Proxy difunde por WS; la UI lo pinta en “Mensajes recibidos (WebSocket)” sin refresco.
 
 **Historial (pull):**
 
-1.  UI → `POST /history` con `{user}` (el “logeado” en la UI).
+1.  UI → `GET /users/{username}/history` con `{user}` (el “logeado” en la UI).
 2.  Proxy → TCP: `{"command":"GET_HISTORY","data":{"user":"..."}}\n`.
 3.  Backend devuelve listado (JSON); si no fuese JSON, el proxy retorna el texto crudo.
 4.  UI abre un modal y muestra los mensajes ya convertidos a líneas legibles.
