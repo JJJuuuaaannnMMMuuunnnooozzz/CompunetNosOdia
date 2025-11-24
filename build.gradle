@@ -1,5 +1,17 @@
+plugins {
+    id 'com.zeroc.gradle.ice-builder.slice' version '1.5.2' apply false
+}
+
 subprojects{
     apply plugin: 'java'
+    apply plugin: 'application'
+    apply plugin: 'com.zeroc.gradle.ice-builder.slice'
+
+    slice {
+        java {
+            files = [file("../Chat.ice")]
+        }
+    }
 
     repositories{
         mavenCentral()
@@ -7,7 +19,9 @@ subprojects{
 
     dependencies{
         // https://mvnrepository.com/artifact/com.google.code.gson/gson
-        implementation("com.google.code.gson:gson:2.13.2")
+        implementation 'com.google.code.gson:gson:2.13.2'
+        implementation 'com.zeroc:ice:3.7.9'
+
     }
 
     jar{

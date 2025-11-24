@@ -3,7 +3,6 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
 import com.zeroc.Ice.*;
-import imp.ChatServerImpl;
 
 public class Server {
     private static final int PORT = 9090; 
