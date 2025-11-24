@@ -2,6 +2,8 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
+import com.zeroc.Ice.*;
+import imp.ChatServerImpl;
 
 public class Server {
     private static final int PORT = 9090; 
@@ -13,6 +15,8 @@ public class Server {
     protected static List<String> history = new CopyOnWriteArrayList<>();
 
     protected static Map<String, GroupCallInfo> activeGroupCalls = new ConcurrentHashMap<>();
+
+    public static Map<String, Demo.ChatClientPrx> onlineClients = new ConcurrentHashMap<>();
 
 
     public static void main(String[] args) throws IOException {
@@ -26,7 +30,21 @@ public class Server {
          try {
             PersistenceManager.init();
             groups = PersistenceManager.loadGroups();
-            System.out.println("Grupos cargados desde persistencia: " + groups.keySet());
+             System.out.println("Grupos cargados desde persistencia: " + groups.keySet());
+
+
+            Communicator communicator = Util.initialize(args);
+            ObjectAdapter adapter = communicator.createObjectAdapterWithEndpoints("ChatAdapter", "ws -p 9099");
+
+             adapter.add(new ChatServerImpl(), Util.stringToIdentity("ChatServer"));
+
+             // Activar
+             adapter.activate();
+             System.out.println("Servidor ICE de Chat/Llamadas escuchando en puerto 9099...");
+
+             communicator.waitForShutdown();
+
+
         } catch (IOException e) {
             e.printStackTrace();
         }
