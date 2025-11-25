@@ -71,6 +71,7 @@ public class ClientSession implements Runnable {
                 case "REGISTER":
                     username = rq.getData().get("username").getAsString().trim();
                     clientIp = rq.getData().get("clientIp").getAsString().trim();
+                    System.out.println("[DEBUG] Usuario: " + username);
                     Server.clients.put(username, this);
 
                     response = "OK";
@@ -208,14 +209,6 @@ public class ClientSession implements Runnable {
                     sendMessage(gson.toJson(fullHistoryResponse));
                     response = "OK";
                     break;
-
-
-                case "GET_USERS":
-                    List<String> usersOnline = new ArrayList<>(Server.onlineClients.keySet());
-                    JsonObject json = new JsonObject();
-                    json.addProperty("command", "USER_LIST");
-                    json.add("data", gson.toJsonTree(usersOnline));
-                    sendMessage(gson.toJson(json));
 
 
 

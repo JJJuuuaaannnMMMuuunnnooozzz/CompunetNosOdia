@@ -1,11 +1,12 @@
 import java.io.*;
+import java.lang.Exception;
 import java.net.*;
-import java.util.*;
-import java.util.concurrent.*;
-import com.zeroc.Ice.*;
+        import java.util.*;
+        import java.util.concurrent.*;
+        import com.zeroc.Ice.*;
 
 public class Server {
-    private static final int PORT = 9090; 
+    private static final int PORT = 9090;
     // username -> session
     protected static Map<String, ClientSession> clients = new ConcurrentHashMap<>();
     // groupName -> set of usernames
@@ -26,33 +27,44 @@ public class Server {
         InetAddress localAddress = InetAddress.getLocalHost();
         System.out.println("Servidor escuchando en IP " + localAddress.getHostAddress() + " y puerto " + port);
 
-         try {
+        try {
             PersistenceManager.init();
             groups = PersistenceManager.loadGroups();
-             System.out.println("Grupos cargados desde persistencia: " + groups.keySet());
+            System.out.println("Grupos cargados desde persistencia: " + groups.keySet());
+
+
+            ExecutorService pool = Executors.newCachedThreadPool();
+
+            new Thread(() ->{
+                System.out.println("Hilo de aceptación REST iniciado...");
+                while (true) {
+                    try {
+                        Socket clientSocket = serverSocket.accept();
+                        pool.execute(new ClientSession(clientSocket));
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+                }
+
+            }).start();
 
 
             Communicator communicator = Util.initialize(args);
             ObjectAdapter adapter = communicator.createObjectAdapterWithEndpoints("ChatAdapter", "ws -p 9099");
 
-             adapter.add(new ChatServerImpl(), Util.stringToIdentity("ChatServer"));
+            adapter.add(new ChatServerImpl(), Util.stringToIdentity("ChatServer"));
 
-             // Activar
-             adapter.activate();
-             System.out.println("Servidor ICE de Chat/Llamadas escuchando en puerto 9099...");
+            // Activar
+            adapter.activate();
+            System.out.println("Servidor ICE de Chat/Llamadas escuchando en puerto 9099...");
 
-             communicator.waitForShutdown();
+            communicator.waitForShutdown();
 
 
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        ExecutorService pool = Executors.newCachedThreadPool();
 
-        while (true) {
-            Socket clientSocket = serverSocket.accept();
-            pool.execute(new ClientSession(clientSocket));
-        }
     }
 }
