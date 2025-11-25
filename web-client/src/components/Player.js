@@ -6,6 +6,8 @@ let bufferQueue = [];
 let isPlaying = false;
 let mediaStream = null;
 let scriptProcessor = null;
+let currentTargets = null; // Puede ser un string (usuario) o un array (grupo)
+let isGroupCall = false;
 
 const initAudioContext = () => {
     if (!audioCtx) {
@@ -51,8 +53,11 @@ export const playAudioChunk = (bytes) => {
     if (!isPlaying) processQueue();
 };
 
-export const startMicrophone = async (targetUser) => {
+export const startMicrophone = async (target, isGroup = false) => {
     initAudioContext();
+    currentTargets = target;
+    isGroupCall = isGroup;
+    
     try {
         mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
         const source = audioCtx.createMediaStreamSource(mediaStream);
@@ -69,8 +74,15 @@ export const startMicrophone = async (targetUser) => {
             }
 
             const bytes = new Uint8Array(buffer);
-            // Enviar directamente usando ChatDelegate
-            chatDelegate.sendAudioChunck(targetUser, bytes);
+            
+            // Enviar audio según si es grupo o usuario individual
+            if (isGroupCall && typeof currentTargets === 'string') {
+                // Es una llamada grupal, enviar a todos los participantes del grupo
+                chatDelegate.sendGroupAudio(currentTargets, bytes);
+            } else if (!isGroupCall && typeof currentTargets === 'string') {
+                // Es una llamada individual
+                chatDelegate.sendAudioChunck(currentTargets, bytes);
+            }
         };
 
         source.connect(scriptProcessor);
@@ -99,5 +111,8 @@ export const stopMicrophone = () => {
         scriptProcessor.disconnect();
         scriptProcessor = null;
     }
+    
+    currentTargets = null;
+    isGroupCall = false;
 };
 

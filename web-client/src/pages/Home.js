@@ -191,8 +191,10 @@ export default function Home({ chatId } = {}) {
     const btnCall = container.querySelector("#callButton");
     const btnHangup = container.querySelector("#hangUpButton");
     const inputCallDest = container.querySelector("#targetInputCall");
+    const callModeRadios = container.querySelectorAll('input[name="callMode"]');
 
     let currentCallTarget = null;
+    let isCurrentCallGroup = false;
 
 
     const formRegister = container.querySelector("#registerForm");
@@ -208,19 +210,42 @@ export default function Home({ chatId } = {}) {
                 playAudioChunk(bytes); // Llama a la función del profe
             };
 
+            // Callback para llamadas individuales
             chatDelegate.onIncomingCall = (caller) => {
                 const accept = confirm(`Llamada entrante de ${caller}. ¿Contestar?`);
                 if (accept) {
                     chatDelegate.answerCall(caller);
                     currentCallTarget = caller;
-                    startMicrophone(caller);
+                    isCurrentCallGroup = false;
+                    startMicrophone(caller, false);
                 }
             };
 
             chatDelegate.onCallAccepted = (peer) => {
                 alert(`Conexión establecida con ${peer}`);
                 currentCallTarget = peer;
-                startMicrophone(peer);
+                isCurrentCallGroup = false;
+                startMicrophone(peer, false);
+            };
+
+            // Callbacks para llamadas grupales
+            chatDelegate.onIncomingGroupCall = (groupName, caller) => {
+                const accept = confirm(`Llamada grupal entrante del grupo "${groupName}" iniciada por ${caller}. ¿Unirse?`);
+                if (accept) {
+                    chatDelegate.answerGroupCall(groupName);
+                    currentCallTarget = groupName;
+                    isCurrentCallGroup = true;
+                    startMicrophone(groupName, true);
+                }
+            };
+
+            chatDelegate.onGroupCallAccepted = (groupName, participant) => {
+                console.log(`Usuario ${participant} se unió a la llamada grupal ${groupName}`);
+                // Si ya estamos en la llamada, no hacer nada. Si no, significa que alguien más se unió
+                if (currentCallTarget === groupName) {
+                    // Ya estamos en la llamada, solo notificar
+                    console.log(`Nuevo participante: ${participant}`);
+                }
             };
 
         } catch(e) {
@@ -231,23 +256,40 @@ export default function Home({ chatId } = {}) {
 // 2. BOTÓN LLAMAR
     btnCall.addEventListener("click", async () => {
         const target = inputCallDest.value.trim();
-        if (!target) return alert("Escribe un usuario destino");
+        if (!target) return alert("Escribe un usuario o grupo destino");
+
+        // Detectar si es grupo o usuario
+        const isGroup = Array.from(callModeRadios).find(r => r.checked)?.nextElementSibling?.textContent === "Grupo";
 
         try {
-            await chatDelegate.callUser(target);
-            console.log("Llamando a...", target);
+            if (isGroup) {
+                // Llamada grupal
+                await chatDelegate.callGroup(target);
+                console.log("Llamando a grupo...", target);
+                currentCallTarget = target;
+                isCurrentCallGroup = true;
+                // Iniciar micrófono para grupo
+                startMicrophone(target, true);
+            } else {
+                // Llamada individual
+                await chatDelegate.callUser(target);
+                console.log("Llamando a...", target);
+                currentCallTarget = target;
+                isCurrentCallGroup = false;
+            }
         } catch (e) {
             console.error("Error al llamar:", e);
+            alert("Error al iniciar la llamada: " + e.message);
         }
     });
 
 // 3. BOTÓN COLGAR
     btnHangup.addEventListener("click", () => {
-        console.log("click");
+        console.log("Colgando llamada...");
         stopMicrophone();
         currentCallTarget = null;
+        isCurrentCallGroup = false;
         console.log("Llamada terminada");
-
     });
 
 

@@ -8,6 +8,13 @@ class ChatDelegate {
         this.onIncomingCall = null;
         this.onCallAccepted  = null;
         this.onAudioRecieved = null;
+        
+        // Callbacks para llamadas grupales
+        this.onIncomingGroupCall = null;
+        this.onGroupCallAccepted = null;
+        
+        // Rastrear llamadas grupales activas: groupName -> Set de participantes
+        this.activeGroupCalls = new Map();
     }
 
     async init(username) {
@@ -58,6 +65,22 @@ class ChatDelegate {
         console.log("Enviando audio a", targetUser, "bytes:", audioData?.length);
         await this.serverProxy.sendAudio(this.myUsername, targetUser, audioData);
     }
+
+    // Métodos para llamadas grupales
+    async callGroup(groupName) {
+        if (!this.serverProxy) return;
+        await this.serverProxy.initiateGroupCall(this.myUsername, groupName);
+    }
+
+    async answerGroupCall(groupName) {
+        if (!this.serverProxy) return;
+        await this.serverProxy.answerGroupCall(this.myUsername, groupName);
+    }
+
+    async sendGroupAudio(groupName, audioData) {
+        console.log("Enviando audio grupal a", groupName, "bytes:", audioData?.length);
+        await this.serverProxy.sendGroupAudio(this.myUsername, groupName, audioData);
+    }
 }
 
 class ChatObserver extends Demo.ChatClient {
@@ -91,6 +114,24 @@ class ChatObserver extends Demo.ChatClient {
         console.log("Observer receiveAudio JS, bytes:", data?.length);
         if (this.delegate.onAudioRecieved) {
             this.delegate.onAudioRecieved(data);
+        }
+    }
+
+    incomingGroupCall(groupName, caller, current) {
+        console.log("Observer incomingGroupCall JS desde ICE:", groupName, "por", caller);
+        if (this.delegate.onIncomingGroupCall) {
+            this.delegate.onIncomingGroupCall(groupName, caller);
+        } else {
+            console.log("onIncomingGroupCall NO está configurado");
+        }
+    }
+
+    groupCallAccepted(groupName, participant, current) {
+        console.log("Observer groupCallAccepted JS:", groupName, "participante:", participant);
+        if (this.delegate.onGroupCallAccepted) {
+            this.delegate.onGroupCallAccepted(groupName, participant);
+        } else {
+            console.log("onGroupCallAccepted NO está configurado");
         }
     }
 }
