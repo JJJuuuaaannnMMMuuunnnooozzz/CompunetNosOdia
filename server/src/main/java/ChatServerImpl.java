@@ -7,9 +7,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
 import java.util.UUID;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public class ChatServerImpl implements ChatServer {
+    // Mapa para rastrear llamadas grupales activas: groupName -> Set de participantes
+    private static Map<String, Set<String>> activeGroupCalls = new ConcurrentHashMap<>();
     @Override
     public void register(String username, ChatClientPrx client, Current current) {
         ChatClientPrx fixedClient = client.ice_fixed(current.con);
@@ -106,6 +110,91 @@ public class ChatServerImpl implements ChatServer {
                 // Formatear sender como "Grupo:Usuario"
                 String displaySender = groupName + ":" + fromUser;
                 client.receiveVoiceNoteAsync(displaySender, data);
+            }
+        }
+    }
+
+    @Override
+    public void initiateGroupCall(String fromUser, String groupName, Current current) {
+        System.out.println("Iniciando llamada grupal: " + fromUser + " -> grupo " + groupName);
+        
+        // Verificar que el grupo existe
+        Set<String> groupMembers = Server.groups.get(groupName);
+        if (groupMembers == null || groupMembers.isEmpty()) {
+            System.out.println("Grupo no encontrado: " + groupName);
+            return;
+        }
+
+        // Crear o actualizar la llamada grupal
+        Set<String> participants = activeGroupCalls.computeIfAbsent(groupName, k -> ConcurrentHashMap.newKeySet());
+        participants.add(fromUser);
+
+        // Notificar a todos los miembros del grupo (excepto al que inició)
+        for (String member : groupMembers) {
+            if (!member.equals(fromUser)) {
+                ChatClientPrx memberClient = Server.onlineClients.get(member);
+                if (memberClient != null) {
+                    try {
+                        memberClient.incomingGroupCallAsync(groupName, fromUser);
+                        System.out.println("Notificando a " + member + " sobre llamada grupal");
+                    } catch (Exception e) {
+                        System.out.println("Error notificando a " + member + ": " + e.getMessage());
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public void answerGroupCall(String fromUser, String groupName, Current current) {
+        System.out.println("Usuario " + fromUser + " aceptó llamada grupal " + groupName);
+        
+        // Agregar al participante a la llamada grupal
+        Set<String> participants = activeGroupCalls.get(groupName);
+        if (participants == null) {
+            System.out.println("Llamada grupal no existe: " + groupName);
+            return;
+        }
+
+        participants.add(fromUser);
+
+        // Notificar a todos los participantes existentes sobre el nuevo participante
+        for (String participant : participants) {
+            if (!participant.equals(fromUser)) {
+                ChatClientPrx participantClient = Server.onlineClients.get(participant);
+                if (participantClient != null) {
+                    try {
+                        participantClient.groupCallAcceptedAsync(groupName, fromUser);
+                        System.out.println("Notificando a " + participant + " que " + fromUser + " se unió");
+                    } catch (Exception e) {
+                        System.out.println("Error notificando a " + participant + ": " + e.getMessage());
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public void sendGroupAudio(String fromUser, String groupName, byte[] data, Current current) {
+        // Enviar audio a todos los participantes de la llamada grupal (excepto al emisor)
+        Set<String> participants = activeGroupCalls.get(groupName);
+        if (participants == null || participants.isEmpty()) {
+            System.out.println("Llamada grupal no activa: " + groupName);
+            return;
+        }
+
+        System.out.println("Enviando audio grupal de " + fromUser + " a grupo " + groupName + " (" + participants.size() + " participantes)");
+
+        for (String participant : participants) {
+            if (!participant.equals(fromUser)) {
+                ChatClientPrx participantClient = Server.onlineClients.get(participant);
+                if (participantClient != null) {
+                    try {
+                        participantClient.receiveAudioAsync(data);
+                    } catch (Exception e) {
+                        System.out.println("Error enviando audio a " + participant + ": " + e.getMessage());
+                    }
+                }
             }
         }
     }

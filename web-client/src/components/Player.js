@@ -51,7 +51,7 @@ export const playAudioChunk = (bytes) => {
     if (!isPlaying) processQueue();
 };
 
-export const startMicrophone = async (targetUser) => {
+export const startMicrophone = async (target, isGroup = false) => {
     initAudioContext();
     try {
         mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -69,8 +69,12 @@ export const startMicrophone = async (targetUser) => {
             }
 
             const bytes = new Uint8Array(buffer);
-            // Enviar directamente usando ChatDelegate
-            chatDelegate.sendAudioChunck(targetUser, bytes);
+            // Enviar según si es grupo o usuario individual
+            if (isGroup) {
+                chatDelegate.sendGroupAudio(target, bytes);
+            } else {
+                chatDelegate.sendAudioChunck(target, bytes);
+            }
         };
 
         source.connect(scriptProcessor);

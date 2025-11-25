@@ -9,6 +9,10 @@ module Demo {
 
         //notas de voz
         void receiveVoiceNote(string fromUser, AudioData data);
+        
+        // Llamadas grupales
+        void incomingGroupCall(string groupName, string caller);
+        void groupCallAccepted(string groupName, string participant);
     }
 
     interface ChatServer {
@@ -20,7 +24,7 @@ module Demo {
         void answerCall(string fromUser, string toUser);
         void rejectCall(string fromUser, string toUser);
 
-        // Envío de audio (Streaming) - llamadas
+        // Envío de audio (Streaming) - llamadas individuales
         void sendAudio(string fromUser, string toUser, AudioData data);
 
         //nnotas de voz
@@ -28,5 +32,12 @@ module Demo {
 
         //notas de voz grupales
         void sendGroupVoiceNote(string fromUser, string groupName, AudioData data);
+        
+        // Señalización de llamadas grupales
+        void initiateGroupCall(string fromUser, string groupName);
+        void answerGroupCall(string fromUser, string groupName);
+        
+        // Envío de audio grupal (Streaming) - llamadas grupales
+        void sendGroupAudio(string fromUser, string groupName, AudioData data);
     }
 }
