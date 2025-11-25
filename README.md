@@ -125,6 +125,9 @@ Estos se insertan en el panel “Mensajes recibidos (WebSocket)” en tiempo rea
 
 * **Llamadas de usuario a grupo:** Estando registrado con un usuario válido debe seleccionar la opción GRUPO en el apartado de llamadas y escribir el nombre del grupo al que desea llamar, a cada usuario receptror le saldrá una notificación para recibir la llamada, de ser aceptada se escucharán las voces hasta que alguno de los dos presione el botón de colgar, aunque si uno cuelga no se interrumpirá la llamada para los demás.
 
+### Instruccion IP servidor:
+
+Para manejar la IP del servidor y mantener consistentemente la forma en que se conecta a este, se creó el archivo config.json en la carpeta web-client, el cual contiene la IP del servidor y el puerto de conexión que van a ser utilizados por el ChatDelegate.js .
 
 ## 3. Integrantes del grupo
 
