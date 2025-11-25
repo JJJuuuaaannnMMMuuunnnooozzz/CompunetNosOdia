@@ -71,6 +71,13 @@ class ChatDelegate {
         // Llama al método del servidor
         await this.serverProxy.sendVoiceNote(this.myUsername, targetUser, audioBytes);
     }
+
+    //Este señor de aca es para los audios grupales
+    async sendGroupVoiceNote(groupName, audioBytes) {
+        if (!this.serverProxy) return;
+        console.log(`Enviando nota de voz a grupo ${groupName}`);
+        await this.serverProxy.sendGroupVoiceNote(this.myUsername, groupName, audioBytes);
+    }
 }
 
 class ChatObserver extends Demo.ChatClient {

@@ -19,5 +19,12 @@
     "to": "j",
     "type": "text",
     "content": "Funciona?"
+  },
+  {
+    "timestamp": "1764077508292",
+    "from": "d",
+    "to": "test_audio",
+    "type": "text",
+    "content": "lol"
   }
 ]

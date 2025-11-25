@@ -1,9 +1,10 @@
 import java.io.*;
 import java.lang.Exception;
 import java.net.*;
-        import java.util.*;
-        import java.util.concurrent.*;
-        import com.zeroc.Ice.*;
+import java.util.*;
+import java.util.concurrent.*;
+import com.zeroc.Ice.*;
+import com.zeroc.Ice.Properties;
 
 public class Server {
     private static final int PORT = 9090;
@@ -14,7 +15,7 @@ public class Server {
     // historial en memoria
     protected static List<String> history = new CopyOnWriteArrayList<>();
 
-    protected static Map<String, GroupCallInfo> activeGroupCalls = new ConcurrentHashMap<>();
+    //protected static Map<String, GroupCallInfo> activeGroupCalls = new ConcurrentHashMap<>();
 
     public static Map<String, Demo.ChatClientPrx> onlineClients = new ConcurrentHashMap<>();
 
@@ -48,8 +49,20 @@ public class Server {
 
             }).start();
 
+            //Añadir properties para tiempo de conexión del cliente de ICE
 
-            Communicator communicator = Util.initialize(args);
+            // Crear properties
+            Properties props = Util.createProperties();
+            props.setProperty("Ice.ACM.Timeout","600");
+            props.setProperty("Ice.ACM.Heartbeat", "3");
+
+            // Crear InitializationData y asignar properties
+            com.zeroc.Ice.InitializationData initData = new com.zeroc.Ice.InitializationData();
+            initData.properties = props;
+
+            // Inicializar communicator con initData
+            Communicator communicator = Util.initialize(initData);
+
             ObjectAdapter adapter = communicator.createObjectAdapterWithEndpoints("ChatAdapter", "ws -p 9099");
 
             adapter.add(new ChatServerImpl(), Util.stringToIdentity("ChatServer"));

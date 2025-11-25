@@ -5,6 +5,7 @@ import com.zeroc.Ice.Current;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Set;
 import java.util.UUID;
 
 
@@ -79,6 +80,33 @@ public class ChatServerImpl implements ChatServer {
             target.receiveVoiceNoteAsync(fromUser, data);
         } else {
             System.out.println("Usuario " + toUser + " no encontrado para nota de voz.");
+        }
+    }
+
+    @Override
+    public void sendGroupVoiceNote(String fromUser, String groupName, byte[] data, Current current) {
+        System.out.println("Nota de voz de grupo: " + fromUser + " -> " + groupName);
+
+        // Validar que si este el grupo
+        Set<String> members = Server.groups.get(groupName);
+        if (members == null) {
+            System.out.println("Grupo no encontrado: " + groupName);
+            return;
+        }
+
+        // Iterar sobre cada miembro
+        for (String member : members) {
+            // que no me llegue a mi mismo
+            //if (member.equals(fromUser)) continue;
+
+            // Validamos que este activo entre los usuatios de mi array de Ice
+            Demo.ChatClientPrx client = Server.onlineClients.get(member);
+            if (client != null) {
+
+                // Formatear sender como "Grupo:Usuario"
+                String displaySender = groupName + ":" + fromUser;
+                client.receiveVoiceNoteAsync(displaySender, data);
+            }
         }
     }
 

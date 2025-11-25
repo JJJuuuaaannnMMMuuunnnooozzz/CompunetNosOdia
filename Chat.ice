@@ -25,5 +25,8 @@ module Demo {
 
         //nnotas de voz
         void sendVoiceNote(string fromUser, string toUser, AudioData data);
+
+        //notas de voz grupales
+        void sendGroupVoiceNote(string fromUser, string groupName, AudioData data);
     }
 }

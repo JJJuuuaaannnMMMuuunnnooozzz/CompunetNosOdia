@@ -68,7 +68,8 @@
         "answerCall": [, , , , , [[7], [7]], , , , ],
         "rejectCall": [, , , , , [[7], [7]], , , , ],
         "sendAudio": [, , , , , [[7], [7], ["Demo.AudioDataHelper"]], , , , ],
-        "sendVoiceNote": [, , , , , [[7], [7], ["Demo.AudioDataHelper"]], , , , ]
+        "sendVoiceNote": [, , , , , [[7], [7], ["Demo.AudioDataHelper"]], , , , ],
+        "sendGroupVoiceNote": [, , , , , [[7], [7], ["Demo.AudioDataHelper"]], , , , ]
     });
     exports.Demo = Demo;
 }

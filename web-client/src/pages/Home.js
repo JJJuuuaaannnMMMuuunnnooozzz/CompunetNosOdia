@@ -57,6 +57,18 @@ export default function Home({ chatId } = {}) {
       <div class="side-card">
           <h3 class="side-title">Notas de voz</h3>
           <p class="side-subtitle">Graba y envía audio por ICE</p>
+          
+           <!-- Selector entre usuario/grupo para audio -->
+          <div class="segmented">
+            <label class="seg active">
+              <input id="audioModeUser" type="radio" name="audioMode" checked>
+              <span>Usuario</span>
+            </label>
+            <label class="seg">
+              <input id="audioModeGroup" type="radio" name="audioMode">
+              <span>Grupo</span>
+            </label>
+          </div>
 
           <input id="vnDestInput" class="input" type="text" placeholder="Usuario Destino">
 
@@ -77,15 +89,15 @@ export default function Home({ chatId } = {}) {
           <p class="side-subtitle">Inicia/termina llamadas a usuario o grupo</p>
 
           <div class="segmented">
-            <label class="seg active">
-              <input type="radio" name="callMode" checked>
-              <span>Usuario</span>
-            </label>
-            <label class="seg">
-              <input type="radio" name="callMode">
-              <span>Grupo</span>
-            </label>
-          </div>
+          <label class="seg active">
+            <input id="callModeUser" type="radio" name="callMode" checked>
+            <span>Usuario</span>
+          </label>
+          <label class="seg">
+            <input id="callModeGroup" type="radio" name="callMode">
+            <span>Grupo</span>
+          </label>
+        </div>
 
           <input id="targetInputCall" class="input" type="text" placeholder="Destino (usuario o grupo)">
 
@@ -259,24 +271,45 @@ export default function Home({ chatId } = {}) {
 
 
 
+
     // Callback de Nota de Voz (Archivo)
     chatDelegate.onVoiceNoteReceived = (fromUser, audioBytes) => {
+        // preparar el audio
         const blob = new Blob([audioBytes], { type: 'audio/webm' });
         const url = URL.createObjectURL(blob);
 
+        // Procesar el nombre del remitente (si viene de un grupo)
+        let senderDisplay = fromUser;
+        let tagText = "Audio ICE";
+        let tagStyle = "background:#e91e63;" //rosa para privados
+
+        // Formato esperado del servidor para grupos: "NombreGrupo:UsuarioEmisor"
+        if (fromUser.includes(":")) {
+            const parts = fromUser.split(":");
+            const groupName = parts[0];
+            const userName = parts[1];
+
+            senderDisplay = `${userName}`;
+            tagText = `${groupName}`;
+            tagStyle = "background:#2196f3;"; // Color azul para grupos
+        }
+
+        // Renderizar en el DOM
         const box = container.querySelector("#receivedMessages");
         const div = document.createElement("div");
-        //eso es para qye tenga formato de audio y se pueda reproducir en la bandeja de mensajes
-        //usando la url del audio que llegó
         div.className = "ws-item";
+
         div.innerHTML = `
-                   <span class="tag tag-audio" style="background:#e91e63;"> Audio ICE</span>
-                   <strong>${fromUser}:</strong>
-                   <br>
-                   <audio controls src="${url}" style="margin-top:5px; width:100%;"></audio>
-               `;
-        box.prepend(div);
+       <span class="tag" style="${tagStyle}">${tagText}</span>
+       <strong>${senderDisplay}:</strong>
+       <br>
+       <audio controls src="${url}" style="margin-top:5px; width:100%;"></audio>
+    `;
+
+        // Añadir al inicio de la lista
+        box?.prepend(div);
     };
+
 
 
 
@@ -309,7 +342,13 @@ export default function Home({ chatId } = {}) {
         if(!target) return alert("Pon un usuario destino para el audio");
         if(!recordedAudioBytes) return alert("No hay audio grabado");
 
-        chatDelegate.sendVoiceNote(target, recordedAudioBytes);
+        const isGroupMode = container.querySelector('#audioModeGroup').checked;
+
+        if (isGroupMode) {
+            chatDelegate.sendGroupVoiceNote(target, recordedAudioBytes);
+        } else {
+            chatDelegate.sendVoiceNote(target, recordedAudioBytes);
+        }
 
         // Reset UI
         recordedAudioBytes = null;
@@ -327,6 +366,30 @@ export default function Home({ chatId } = {}) {
 
 
   const chatListEl = container.querySelector("#chatList");
+
+
+
+    // Función para manejar el cambio de estilo 'active' en grupos de radio buttons
+    const setupSegmentedControl = (radioName) => {
+        const radios = container.querySelectorAll(`input[name="${radioName}"]`);
+        radios.forEach(radio => {
+            radio.addEventListener("change", (e) => {
+                radios.forEach(r => r.closest('.seg')?.classList.remove('active'));
+                if (e.target.checked) {
+                    e.target.closest('.seg')?.classList.add('active');
+                }
+            });
+        });
+    };
+
+    // Aplicar el estilo al selector de Notas de Voz (name="audioMode")
+    setupSegmentedControl("audioMode");
+
+    // Aplicar el estilo al selector de Llamadas (name="callMode")
+    setupSegmentedControl("callMode");
+
+
+
   try {
     const sample = [
       { id: "ana", name: "Ana", lastMessage: "¿Listo para la demo?" },
