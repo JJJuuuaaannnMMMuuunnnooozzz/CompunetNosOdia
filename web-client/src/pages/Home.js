@@ -45,6 +45,8 @@ export default function Home() {
         root.classList.add("logged-in");
 
       //necesito cargar los usuarios y grupos
+        const myGroups =[]
+        const myContacts = []
 
         // Crear componentes
         const chatArea = createChatArea(username);

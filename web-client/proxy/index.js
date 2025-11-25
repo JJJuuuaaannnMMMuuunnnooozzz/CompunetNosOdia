@@ -274,6 +274,31 @@ app.post('/groups/:groupName/messages', (req, res) => {
 });
 
 
+app.get('/active-users', (req, res) => {
+    const payload = {
+        command: "GET_USERS",
+        data: {}
+    };
+
+    if (connected) {
+        socket.write(JSON.stringify(payload));
+        socket.write("\n");
+
+        socket.once("data", (data) => {
+            const message = data.toString().trim();
+            try {
+                res.json(JSON.parse(message));
+            } catch(e) {
+                res.json({ raw: message });
+            }
+        });
+    } else {
+        res.status(503).json({ error: "No conectado a Java" });
+    }
+});
+
+
+
 const PORT = 3001;
 app.listen(PORT, () => {
     console.log(`Proxy escuchando en http://localhost:${PORT}`);

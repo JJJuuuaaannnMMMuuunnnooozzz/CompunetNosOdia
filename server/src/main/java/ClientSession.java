@@ -210,6 +210,13 @@ public class ClientSession implements Runnable {
                     break;
 
 
+                case "GET_USERS":
+                    List<String> usersOnline = new ArrayList<>(Server.onlineClients.keySet());
+                    JsonObject json = new JsonObject();
+                    json.addProperty("command", "USER_LIST");
+                    json.add("data", gson.toJsonTree(usersOnline));
+                    sendMessage(gson.toJson(json));
+
 
 
 

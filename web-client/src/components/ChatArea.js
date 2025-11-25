@@ -7,7 +7,7 @@ export function createChatArea(currentUser) {
     // Estado inicial vacío
     container.innerHTML = `
         <div class="empty-state">
-            <h2>Bienvenido al Chat P2P</h2>
+            <h2>Chat</h2>
             <p>Selecciona un chat para comenzar a enviar mensajes o llamar.</p>
         </div>
     `;
