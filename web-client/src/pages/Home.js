@@ -1,5 +1,7 @@
 // web-client/src/pages/Home.js
 import { renderChatList } from "../components/chatList.js";
+import chatDelegate from "../services/ChatDelegate.js";
+import { playAudioChunk, startMicrophone, stopMicrophone } from "../components/Player.js";
 
 export default function Home({ chatId } = {}) {
   const container = document.createElement("div");
@@ -75,7 +77,10 @@ export default function Home({ chatId } = {}) {
 
           <button type="button" class="btn">Enviar nota</button>
         </div>
-
+        
+        
+        <!--Aqui esta lo de las llamadas-->
+        
         <div class="side-card">
           <h3 class="side-title">Llamadas</h3>
           <p class="side-subtitle">Inicia/termina llamadas a usuario o grupo</p>
@@ -91,11 +96,11 @@ export default function Home({ chatId } = {}) {
             </label>
           </div>
 
-          <input class="input" type="text" placeholder="Destino (usuario o grupo)">
+          <input id="targetInputCall" class="input" type="text" placeholder="Destino (usuario o grupo)">
 
           <div class="row">
-            <button type="button" class="btn">Llamar</button>
-            <button type="button" class="btn ghost">Colgar</button>
+            <button id="callButton" type="button" class="btn">Llamar</button>
+            <button id="hangUpButton" type="button" class="btn ghost">Colgar</button>
           </div>
         </div>
 
@@ -182,6 +187,72 @@ export default function Home({ chatId } = {}) {
       <pre id="responseBox" style="display:none"></pre>
     </div>
   `;
+
+    const btnCall = container.querySelector("#callButton");
+    const btnHangup = container.querySelector("#hangUpButton");
+    const inputCallDest = container.querySelector("#targetInputCall");
+
+    let currentCallTarget = null;
+
+
+    const formRegister = container.querySelector("#registerForm");
+    formRegister.addEventListener("submit", async () => {
+        const username = container.querySelector("#username").value;
+
+        try {
+            await chatDelegate.init(username);
+            console.log("ICE Inicializado correctamente");
+
+            // Configurar callbacks para recibir audio
+            chatDelegate.onAudioRecieved = (bytes) => {
+                playAudioChunk(bytes); // Llama a la función del profe
+            };
+
+            chatDelegate.onIncomingCall = (caller) => {
+                const accept = confirm(`Llamada entrante de ${caller}. ¿Contestar?`);
+                if (accept) {
+                    chatDelegate.answerCall(caller);
+                    currentCallTarget = caller;
+                    startMicrophone(caller);
+                }
+            };
+
+            chatDelegate.onCallAccepted = (peer) => {
+                alert(`Conexión establecida con ${peer}`);
+                currentCallTarget = peer;
+                startMicrophone(peer);
+            };
+
+        } catch(e) {
+            console.error("Error ICE:", e);
+        }
+    });
+
+// 2. BOTÓN LLAMAR
+    btnCall.addEventListener("click", async () => {
+        const target = inputCallDest.value.trim();
+        if (!target) return alert("Escribe un usuario destino");
+
+        try {
+            await chatDelegate.callUser(target);
+            console.log("Llamando a...", target);
+        } catch (e) {
+            console.error("Error al llamar:", e);
+        }
+    });
+
+// 3. BOTÓN COLGAR
+    btnHangup.addEventListener("click", () => {
+        console.log("click");
+        stopMicrophone();
+        currentCallTarget = null;
+        console.log("Llamada terminada");
+
+    });
+
+
+
+
 
   const chatListEl = container.querySelector("#chatList");
   try {
