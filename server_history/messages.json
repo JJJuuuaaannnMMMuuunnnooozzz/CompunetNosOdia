@@ -12,5 +12,12 @@
     "to": "s",
     "type": "text",
     "content": "hola"
+  },
+  {
+    "timestamp": "1764073620869",
+    "from": "j",
+    "to": "j",
+    "type": "text",
+    "content": "Funciona?"
   }
 ]

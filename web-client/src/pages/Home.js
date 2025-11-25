@@ -2,6 +2,7 @@
 import { renderChatList } from "../components/chatList.js";
 import chatDelegate from "../services/ChatDelegate.js";
 import { playAudioChunk, startMicrophone, stopMicrophone } from "../components/Player.js";
+import { startRecording, stopRecording } from "../components/VoiceRecorder.js";
 
 export default function Home({ chatId } = {}) {
   const container = document.createElement("div");
@@ -51,31 +52,21 @@ export default function Home({ chatId } = {}) {
           <small>Conectado</small>
         </div>
       </div>
-
-      <div class="side-stack">
-        <div class="side-card">
+        
+      <!--Aqui esta de lo de notas de voz-->
+      <div class="side-card">
           <h3 class="side-title">Notas de voz</h3>
-          <p class="side-subtitle">Envía notas a un usuario o a un grupo</p>
+          <p class="side-subtitle">Graba y envía audio por ICE</p>
 
-          <div class="segmented">
-            <label class="seg active">
-              <input type="radio" name="vnMode" checked>
-              <span>Usuario</span>
-            </label>
-            <label class="seg">
-              <input type="radio" name="vnMode">
-              <span>Grupo</span>
-            </label>
-          </div>
-
-          <input class="input" type="text" placeholder="Destino (usuario o grupo)">
+          <input id="vnDestInput" class="input" type="text" placeholder="Usuario Destino">
 
           <div class="row">
-            <button type="button" class="btn">Abrir micrófono</button>
-            <button type="button" class="btn ghost">Detener</button>
+            <button id="audioOpenMicButton" type="button" class="btn">Grabar</button>
+            <button id="audioStopButton" type="button" class="btn ghost" disabled>Detener</button>
           </div>
 
-          <button type="button" class="btn">Enviar nota</button>
+          <button id="audioSendButton" type="button" class="btn" disabled>Enviar nota</button>
+          <div id="audioStatus" class="muted" style="margin-top:5px; font-size:0.8em;"></div>
         </div>
         
         
@@ -188,14 +179,28 @@ export default function Home({ chatId } = {}) {
     </div>
   `;
 
+
+    //botones para auidios
+
+    // Botones de Audio
+    const btnRec = container.querySelector("#audioOpenMicButton");
+    const btnStopRec = container.querySelector("#audioStopButton");
+    const btnSendAudio = container.querySelector("#audioSendButton");
+    const inputAudioDest = container.querySelector("#vnDestInput");
+    const audioStatus = container.querySelector("#audioStatus");
+
+    //botones para llamadas
     const btnCall = container.querySelector("#callButton");
     const btnHangup = container.querySelector("#hangUpButton");
     const inputCallDest = container.querySelector("#targetInputCall");
 
     let currentCallTarget = null;
+    let recordedAudioBytes = null;
 
 
     const formRegister = container.querySelector("#registerForm");
+
+    //Eso funciona de registro y listener para los eventos de llamadas
     formRegister.addEventListener("submit", async () => {
         const username = container.querySelector("#username").value;
 
@@ -203,7 +208,7 @@ export default function Home({ chatId } = {}) {
             await chatDelegate.init(username);
             console.log("ICE Inicializado correctamente");
 
-            // Configurar callbacks para recibir audio
+            // Configurar callbacks para recibir audio de llamada
             chatDelegate.onAudioRecieved = (bytes) => {
                 playAudioChunk(bytes); // Llama a la función del profe
             };
@@ -228,7 +233,7 @@ export default function Home({ chatId } = {}) {
         }
     });
 
-// 2. BOTÓN LLAMAR
+    // 2. BOTÓN LLAMAR
     btnCall.addEventListener("click", async () => {
         const target = inputCallDest.value.trim();
         if (!target) return alert("Escribe un usuario destino");
@@ -241,7 +246,7 @@ export default function Home({ chatId } = {}) {
         }
     });
 
-// 3. BOTÓN COLGAR
+    // 3. BOTÓN COLGAR
     btnHangup.addEventListener("click", () => {
         console.log("click");
         stopMicrophone();
@@ -249,6 +254,73 @@ export default function Home({ chatId } = {}) {
         console.log("Llamada terminada");
 
     });
+
+
+
+
+
+    // Callback de Nota de Voz (Archivo)
+    chatDelegate.onVoiceNoteReceived = (fromUser, audioBytes) => {
+        const blob = new Blob([audioBytes], { type: 'audio/webm' });
+        const url = URL.createObjectURL(blob);
+
+        const box = container.querySelector("#receivedMessages");
+        const div = document.createElement("div");
+        //eso es para qye tenga formato de audio y se pueda reproducir en la bandeja de mensajes
+        //usando la url del audio que llegó
+        div.className = "ws-item";
+        div.innerHTML = `
+                   <span class="tag tag-audio" style="background:#e91e63;"> Audio ICE</span>
+                   <strong>${fromUser}:</strong>
+                   <br>
+                   <audio controls src="${url}" style="margin-top:5px; width:100%;"></audio>
+               `;
+        box.prepend(div);
+    };
+
+
+
+    // Notitas de  voz :)
+    btnRec.addEventListener("click", async () => {
+        const started = await startRecording();
+        if(started) {
+            btnRec.disabled = true;
+            btnRec.textContent = "Grabando...";
+            btnStopRec.disabled = false;
+            btnSendAudio.disabled = true;
+            audioStatus.textContent = "Grabando...";
+        }
+    });
+
+    //Boton para parar la grabación
+    btnStopRec.addEventListener("click", async () => {
+        recordedAudioBytes = await stopRecording();
+        btnRec.disabled = false;
+        btnRec.textContent = "Grabar";
+        btnStopRec.disabled = true;
+        btnSendAudio.disabled = false;
+        audioStatus.textContent = `Audio listo (${recordedAudioBytes.length} bytes)`;
+    });
+
+    //Boton para enviar audio
+
+    btnSendAudio.addEventListener("click", () => {
+        const target = inputAudioDest.value.trim();
+        if(!target) return alert("Pon un usuario destino para el audio");
+        if(!recordedAudioBytes) return alert("No hay audio grabado");
+
+        chatDelegate.sendVoiceNote(target, recordedAudioBytes);
+
+        // Reset UI
+        recordedAudioBytes = null;
+        btnSendAudio.disabled = true;
+        audioStatus.textContent = "Enviado.";
+    });
+
+
+
+
+
 
 
 
@@ -383,10 +455,20 @@ export default function Home({ chatId } = {}) {
     handleFormSubmit(`http://localhost:3001/groups/${groupName}/messages`, { message }, "POST","Mensaje de grupo enviado:");
   });
 
+
+
+
+
   const modal = container.querySelector("#historyModal");
   const closeModal = container.querySelector("#closeModal");
   closeModal.addEventListener("click", () => modal.classList.add("hidden"));
   modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.add("hidden"); });
 
   return container;
+
+
+
+
+
+
 }

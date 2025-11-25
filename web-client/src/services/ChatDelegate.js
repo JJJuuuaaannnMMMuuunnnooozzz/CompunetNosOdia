@@ -58,6 +58,19 @@ class ChatDelegate {
         console.log("Enviando audio a", targetUser, "bytes:", audioData?.length);
         await this.serverProxy.sendAudio(this.myUsername, targetUser, audioData);
     }
+
+    //Este ya es para audios
+
+    async sendVoiceNote(targetUser, audioBytes) {
+        if (!this.serverProxy) {
+            console.error("No conectado al servidor ICE");
+            return;
+        }
+        console.log("Enviando archivo de audio a", targetUser, "bytes:", audioBytes?.length);
+
+        // Llama al método del servidor
+        await this.serverProxy.sendVoiceNote(this.myUsername, targetUser, audioBytes);
+    }
 }
 
 class ChatObserver extends Demo.ChatClient {
@@ -91,6 +104,15 @@ class ChatObserver extends Demo.ChatClient {
         console.log("Observer receiveAudio JS, bytes:", data?.length);
         if (this.delegate.onAudioRecieved) {
             this.delegate.onAudioRecieved(data);
+        }
+    }
+
+
+    receiveVoiceNote(fromUser, audioData, current) {
+        console.log(`Nota de voz recibida de ${fromUser}: ${audioData.length} bytes`);
+        if (this.delegate.onVoiceNoteReceived) {
+            // Pasamos los bytes crudos a la UI
+            this.delegate.onVoiceNoteReceived(fromUser, audioData);
         }
     }
 }

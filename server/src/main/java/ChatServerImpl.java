@@ -2,6 +2,11 @@ import Demo.ChatClientPrx;
 import Demo.ChatServer;
 import com.zeroc.Ice.Current;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
+
 
 public class ChatServerImpl implements ChatServer {
     @Override
@@ -61,4 +66,20 @@ public class ChatServerImpl implements ChatServer {
         }
 
     }
+
+    //Este es el metodo del servidor para enviar o redirigir las notas de voz
+
+    @Override
+    public void sendVoiceNote(String fromUser, String toUser, byte[] data, Current current) {
+        System.out.println("Retransmitiendo nota de voz de " + fromUser + " a " + toUser + " (" + data.length + " bytes)");
+
+        ChatClientPrx target = Server.onlineClients.get(toUser);
+        if (target != null) {
+            // Enviar los bytes directamente al cliente destino
+            target.receiveVoiceNoteAsync(fromUser, data);
+        } else {
+            System.out.println("Usuario " + toUser + " no encontrado para nota de voz.");
+        }
+    }
+
 }

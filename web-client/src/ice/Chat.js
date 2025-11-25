@@ -44,7 +44,8 @@
         "incomingCall": [, , , , , [[7]], , , , ],
         "callAccepted": [, , , , , [[7]], , , , ],
         "callRejected": [, , , , , [[7]], , , , ],
-        "receiveAudio": [, , , , , [["Demo.AudioDataHelper"]], , , , ]
+        "receiveAudio": [, , , , , [["Demo.AudioDataHelper"]], , , , ],
+        "receiveVoiceNote": [, , , , , [[7], ["Demo.AudioDataHelper"]], , , , ]
     });
 
     const iceC_Demo_ChatServer_ids = [
@@ -66,7 +67,8 @@
         "initiateCall": [, , , , , [[7], [7]], , , , ],
         "answerCall": [, , , , , [[7], [7]], , , , ],
         "rejectCall": [, , , , , [[7], [7]], , , , ],
-        "sendAudio": [, , , , , [[7], [7], ["Demo.AudioDataHelper"]], , , , ]
+        "sendAudio": [, , , , , [[7], [7], ["Demo.AudioDataHelper"]], , , , ],
+        "sendVoiceNote": [, , , , , [[7], [7], ["Demo.AudioDataHelper"]], , , , ]
     });
     exports.Demo = Demo;
 }
