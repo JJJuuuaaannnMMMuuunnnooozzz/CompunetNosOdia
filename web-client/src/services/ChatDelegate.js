@@ -19,10 +19,22 @@ class ChatDelegate {
 
     async init(username) {
         this.myUsername = username;
-        this.communicator = Ice.initialize();
 
-        const hostname = window.location.hostname || "localhost";
-        const proxyStr = `ChatServer:ws -h ${hostname} -p 9099`;
+
+        let targetIp = "localhost";
+        try{
+            const response = await fetch("../config.json");
+            const config = await response.json();
+            if(config.serverIp){
+                targetIp = config.serverIp;
+                console.log("Configuracion cargada desde config.json ", targetIp);
+            }
+        }catch (e){
+            console.warn("No se cargo config.json, usando localhost")
+        }
+
+        this.communicator = Ice.initialize();
+        const proxyStr = `ChatServer:ws -h ${targetIp} -p 9099`;
         const baseProxy = this.communicator.stringToProxy(proxyStr);
         this.serverProxy = await Demo.ChatServerPrx.checkedCast(baseProxy);
 
