@@ -21,6 +21,7 @@ class ChatDelegate {
         this.myUsername = username;
 
 
+
         let targetIp = "localhost";
         try{
             const response = await fetch("../config.json");
@@ -35,6 +36,7 @@ class ChatDelegate {
 
         this.communicator = Ice.initialize();
         const proxyStr = `ChatServer:ws -h ${targetIp} -p 9099`;
+
         const baseProxy = this.communicator.stringToProxy(proxyStr);
         this.serverProxy = await Demo.ChatServerPrx.checkedCast(baseProxy);
 
