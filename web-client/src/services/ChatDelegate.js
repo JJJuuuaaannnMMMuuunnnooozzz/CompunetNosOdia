@@ -21,7 +21,7 @@ class ChatDelegate {
         this.myUsername = username;
         this.communicator = Ice.initialize();
 
-        const hostname = window.location.hostname || "localhost";
+        const hostname = "10.224.223.178";
         const proxyStr = `ChatServer:ws -h ${hostname} -p 9099`;
         const baseProxy = this.communicator.stringToProxy(proxyStr);
         this.serverProxy = await Demo.ChatServerPrx.checkedCast(baseProxy);

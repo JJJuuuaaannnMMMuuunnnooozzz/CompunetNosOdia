@@ -113,6 +113,18 @@ Estos se insertan en el panel “Mensajes recibidos (WebSocket)” en tiempo rea
 * **Canal de eventos:** cualquier JSON entrante con `command` conocido (`GET_MESSAGE`, `GET_MSG_GROUP`) se emite a todos los WS conectados; el cliente clasifica y renderiza según `command` y `data`.
 
 ---
+### Audios
+
+* **Audios de usuario a usuario:** Estando registrado con un usuario válido debe seleccionar la opción USUARIO en el apartado de notas de voz y escribir el nombre del usuario al que desea enviar la nota de voz, presionar el botón grabar para empezar la grabación y detener para pararla, al usuario receptor le saldrá en el registro de los chats la opción de reproducir el audio.
+
+* **Audios de usuario a grupo:** Estando registrado con un usuario válido debe seleccionar la opción GRUPO en el apartado de notas de voz y escribir el nombre del grupo al que desea enviar la nota de voz, presionar el botón grabar para empezar y detenerlo con el botón detener cuando termine, al usuario receptor le saldrá en el registro de los chats la opción de reproducir el audio.
+
+### Llamadas
+
+* **Llamadas de usuario a usuario:** Estando registrado con un usuario válido debe seleccionar la opción USUARIO en el apartado de llamadas y escribir el nombre del usuario al que desea llamar, al usuario receptror le saldrá una notificación para recibir la llamada, de ser aceptada se escucharán las voces hasta que alguno de los dos presione el botón de colgar.
+
+* **Llamadas de usuario a grupo:** Estando registrado con un usuario válido debe seleccionar la opción GRUPO en el apartado de llamadas y escribir el nombre del grupo al que desea llamar, a cada usuario receptror le saldrá una notificación para recibir la llamada, de ser aceptada se escucharán las voces hasta que alguno de los dos presione el botón de colgar, aunque si uno cuelga no se interrumpirá la llamada para los demás.
+
 
 ## 3. Integrantes del grupo
 

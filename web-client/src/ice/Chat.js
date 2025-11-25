@@ -45,7 +45,9 @@
         "callAccepted": [, , , , , [[7]], , , , ],
         "callRejected": [, , , , , [[7]], , , , ],
         "receiveAudio": [, , , , , [["Demo.AudioDataHelper"]], , , , ],
-        "receiveVoiceNote": [, , , , , [[7], ["Demo.AudioDataHelper"]], , , , ]
+        "receiveVoiceNote": [, , , , , [[7], ["Demo.AudioDataHelper"]], , , , ],
+        "incomingGroupCall": [, , , , , [[7], [7]], , , , ],
+        "groupCallAccepted": [, , , , , [[7], [7]], , , , ]
     });
 
     const iceC_Demo_ChatServer_ids = [
@@ -69,7 +71,10 @@
         "rejectCall": [, , , , , [[7], [7]], , , , ],
         "sendAudio": [, , , , , [[7], [7], ["Demo.AudioDataHelper"]], , , , ],
         "sendVoiceNote": [, , , , , [[7], [7], ["Demo.AudioDataHelper"]], , , , ],
-        "sendGroupVoiceNote": [, , , , , [[7], [7], ["Demo.AudioDataHelper"]], , , , ]
+        "sendGroupVoiceNote": [, , , , , [[7], [7], ["Demo.AudioDataHelper"]], , , , ],
+        "initiateGroupCall": [, , , , , [[7], [7]], , , , ],
+        "answerGroupCall": [, , , , , [[7], [7]], , , , ],
+        "sendGroupAudio": [, , , , , [[7], [7], ["Demo.AudioDataHelper"]], , , , ]
     });
     exports.Demo = Demo;
 }
