@@ -7,7 +7,10 @@ export default function Home({ chatId } = {}) {
     const container = document.createElement("div");
 
     // WebSocket entrante (Proxy)
-    const socket = new WebSocket("ws://localhost:3002");
+    const currentIp = window.location.hostname;
+
+    const socket = new WebSocket(`ws://${currentIp}:3002`);
+
     socket.onopen = () => console.log("Conectado al WebSocket del proxy.");
     socket.onmessage = (event) => {
         try {
@@ -252,7 +255,7 @@ export default function Home({ chatId } = {}) {
         }
 
         // Disparar registro HTTP
-        handleFormSubmit("http://localhost:3001/users", { username: user, clientIp: ip }, "POST","Registro exitoso:");
+        handleFormSubmit(`http://${currentIp}:3001/users`, { username: user, clientIp: ip }, "POST","Registro exitoso:");
 
         // Inicializar ICE y conectar callbacks
         try {
@@ -521,20 +524,20 @@ export default function Home({ chatId } = {}) {
         const sender = container.querySelector("#sender").value;
         const receiver = container.querySelector("#receiver").value;
         const message = container.querySelector("#message").value;
-        handleFormSubmit("http://localhost:3001/messages", { sender, receiver, message }, "POST","Mensaje privado enviado:");
+        handleFormSubmit(`http://${currentIp}:3001/messages`, { sender, receiver, message }, "POST","Mensaje privado enviado:");
         container.querySelector("#message").value = "";
     });
 
     container.querySelector("#historyForm").addEventListener("submit", (e) => {
         e.preventDefault();
         if (!window.loggedUser) return alert("Primero registre un usuario.");
-        handleFormSubmit(`http://localhost:3001/users/${window.loggedUser}/history`, null,"GET","Historial cargado:");
+        handleFormSubmit(`http://${currentIp}:3001/users/${window.loggedUser}/history`, null,"GET","Historial cargado:");
     });
 
     container.querySelector("#createGroupForm").addEventListener("submit", (e) => {
         e.preventDefault();
         const groupName = container.querySelector("#groupName").value;
-        handleFormSubmit("http://localhost:3001/groups", { groupName }, "POST","Grupo creado:");
+        handleFormSubmit(`http://${currentIp}:3001/groups`, { groupName }, "POST","Grupo creado:");
     });
 
     container.querySelector("#addToGroupForm").addEventListener("submit", (e) => {
@@ -542,7 +545,7 @@ export default function Home({ chatId } = {}) {
         const groupName = container.querySelector("#groupNameAdd").value;
         const member = container.querySelector("#memberToAdd").value;
         handleFormSubmit(
-            `http://localhost:3001/groups/${groupName}/members`,
+            `http://${currentIp}:3001/groups/${groupName}/members`,
             { members: [member] },
             "POST",
             "Miembro añadido al grupo:"
@@ -553,7 +556,7 @@ export default function Home({ chatId } = {}) {
         e.preventDefault();
         const message = container.querySelector("#groupMessage").value;
         const groupName = container.querySelector("#groupNameMsg").value;
-        handleFormSubmit(`http://localhost:3001/groups/${groupName}/messages`, { message }, "POST","Mensaje de grupo enviado:");
+        handleFormSubmit(`http://${currentIp}:3001/groups/${groupName}/messages`, { message }, "POST","Mensaje de grupo enviado:");
     });
 
     const modal = container.querySelector("#historyModal");

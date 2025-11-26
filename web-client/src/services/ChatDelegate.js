@@ -24,7 +24,7 @@ class ChatDelegate {
 
         let targetIp = "localhost";
         try{
-            const response = await fetch("../config.json");
+            const response = await fetch("./config.json");
             const config = await response.json();
             if(config.serverIp){
                 targetIp = config.serverIp;

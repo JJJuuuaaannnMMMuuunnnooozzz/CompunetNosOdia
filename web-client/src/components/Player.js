@@ -56,7 +56,7 @@ export const startMicrophone = async (target, isGroup = false) => {
     try {
         mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
         const source = audioCtx.createMediaStreamSource(mediaStream);
-        scriptProcessor = audioCtx.createScriptProcessor(2048, 1, 1);
+        scriptProcessor = audioCtx.createScriptProcessor(256, 1, 1);
 
         scriptProcessor.onaudioprocess = (e) => {
             const input = e.inputBuffer.getChannelData(0);
