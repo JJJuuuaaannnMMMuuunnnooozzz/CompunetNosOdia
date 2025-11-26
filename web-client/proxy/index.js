@@ -55,7 +55,7 @@ socket.connect(9090, JAVA_SERVER_IP, () => {
                         });
                     }
                 } catch(e) {
-                    console.log(e);
+
                 }
             });
         } catch (e) {
